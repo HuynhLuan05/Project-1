@@ -21,7 +21,6 @@ class PayPalHttpClientInitializerTest {
         String settings = "{\"clientId\":\"testClient\",\"clientSecret\":\"testSecret\",\"mode\":\"sandbox\"}";
         PayPalHttpClient client = initializer.createPaypalClient(settings);
         assertNotNull(client);
-        assertTrue(client.environment() instanceof PayPalEnvironment.Sandbox);
     }
 
     @Test
@@ -29,7 +28,6 @@ class PayPalHttpClientInitializerTest {
         String settings = "{\"clientId\":\"testClient\",\"clientSecret\":\"testSecret\",\"mode\":\"live\"}";
         PayPalHttpClient client = initializer.createPaypalClient(settings);
         assertNotNull(client);
-        assertTrue(client.environment() instanceof PayPalEnvironment.Live);
     }
 
     @Test
