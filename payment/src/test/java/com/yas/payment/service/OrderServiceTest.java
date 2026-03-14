@@ -2,6 +2,7 @@ package com.yas.payment.service;
 
 import static com.yas.payment.util.SecurityContextUtils.setUpSecurityContext;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -110,16 +111,18 @@ class OrderServiceTest {
     }
 
     @Test
-    void testHandleLongFallback() throws Throwable {
-        Throwable throwable = new RuntimeException("Test Exception");
-        Long result = orderService.handleLongFallback(throwable);
-        assertThat(result).isNull(); // Adjust based on AbstractCircuitBreakFallbackHandler implementation
+    void testHandleLongFallback() {
+        RuntimeException throwable = new RuntimeException("Test Exception");
+        RuntimeException thrown = assertThrows(RuntimeException.class,
+            () -> orderService.handleLongFallback(throwable));
+        assertThat(thrown.getMessage()).isEqualTo("Test Exception");
     }
 
     @Test
-    void testHandlePaymentOrderStatusFallback() throws Throwable {
-        Throwable throwable = new RuntimeException("Test Exception");
-        PaymentOrderStatusVm result = orderService.handlePaymentOrderStatusFallback(throwable);
-        assertThat(result).isNull(); // Adjust based on AbstractCircuitBreakFallbackHandler implementation
+    void testHandlePaymentOrderStatusFallback() {
+        RuntimeException throwable = new RuntimeException("Test Exception");
+        RuntimeException thrown = assertThrows(RuntimeException.class,
+            () -> orderService.handlePaymentOrderStatusFallback(throwable));
+        assertThat(thrown.getMessage()).isEqualTo("Test Exception");
     }
 }
