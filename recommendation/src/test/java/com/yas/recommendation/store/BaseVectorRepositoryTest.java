@@ -56,7 +56,7 @@ public class BaseVectorRepositoryTest<D extends BaseDocument, E> {
 
     public void assertDocumentData(Document createdDoc, E entity) {
         var expectedContent = getFormatEntity(entity);
-        assertEquals(expectedContent, createdDoc.getContent(), "Document format must be formated at declared metadata");
+        assertEquals(expectedContent, createdDoc.getText(), "Document format must be formated at declared metadata");
         assertNotNull(createdDoc.getMetadata(), "Document's metadata must not be null");
         assertFalse(createdDoc.getMetadata().isEmpty(), "Document's metadata must not be empty");
 
@@ -66,8 +66,8 @@ public class BaseVectorRepositoryTest<D extends BaseDocument, E> {
     }
 
     public void assertSearchRequest(SearchRequest searchRequest, E entity) {
-        assertNotNull(searchRequest.query, "Search query must be created");
-        assertEquals(getFormatEntity(entity), searchRequest.query, "Search's Query must be formatted correctly");
+        assertNotNull(searchRequest.getQuery(), "Search query must be created");
+        assertEquals(getFormatEntity(entity), searchRequest.getQuery(), "Search's Query must be formatted correctly");
         assertEquals(searchRequest.getTopK(), embeddingSearchConf.topK(), "Search's top K must be configured");
         assertEquals(
             searchRequest.getSimilarityThreshold(),

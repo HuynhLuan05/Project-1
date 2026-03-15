@@ -109,8 +109,8 @@ public class ProductVectorRepositoryTest extends BaseVectorRepositoryTest<Produc
         assertSearchRequest(searchRequestCaptor.getValue(), searchedProduct);
 
         assertEquals(1, productDocuments.size());
-        assertEquals(similarDocument.getContent(), productDocuments.getFirst().getContent());
-        assertEquals(similarDocument.getContent(), productDocuments.getFirst().getContent());
+        assertEquals(similarDocument.getText(), productDocuments.getFirst().getContent());
+        assertEquals(similarDocument.getText(), productDocuments.getFirst().getContent());
         assertEquals(similarDocument.getMetadata().keySet(), productDocuments.getFirst().getMetadata().keySet());
         assertEquals(similarDocument.getMetadata().entrySet(), productDocuments.getFirst().getMetadata().entrySet());
     }
