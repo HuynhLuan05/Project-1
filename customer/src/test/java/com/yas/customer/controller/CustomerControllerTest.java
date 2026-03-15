@@ -114,6 +114,19 @@ class CustomerControllerTest {
     }
 
     @Test
+    void testGetCustomerById_whenNormalCase_responseCustomerVm() throws Exception {
+        String id = "user-id-456";
+        CustomerVm customerVm = new CustomerVm(id, "jane_doe", "jane@example.com", "Jane", "Doe");
+        when(customerService.getCustomerProfile(id)).thenReturn(customerVm);
+
+        mockMvc.perform(MockMvcRequestBuilders.get(
+                    BACK_OFFICE_CUSTOMER_BASE_URL + "/profile/{id}", id)
+                .accept("application/json"))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.content().json(objectWriter.writeValueAsString(customerVm)));
+    }
+
+    @Test
     void testCreateGuestUser_whenNormalCase_responseGuestUserVm() throws Exception {
 
         GuestUserVm guestUserVm = new GuestUserVm(

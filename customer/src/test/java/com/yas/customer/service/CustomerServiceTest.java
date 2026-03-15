@@ -2,6 +2,7 @@ package com.yas.customer.service;
 
 import com.yas.commonlibrary.exception.AccessDeniedException;
 import com.yas.commonlibrary.exception.DuplicatedException;
+import com.yas.commonlibrary.exception.ForbiddenException;
 import com.yas.commonlibrary.exception.NotFoundException;
 import com.yas.commonlibrary.exception.WrongEmailFormatException;
 import com.yas.customer.config.KeycloakPropsConfig;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.*;
+import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mockito.ArgumentCaptor;
@@ -25,7 +27,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 class CustomerServiceTest {
@@ -50,6 +56,7 @@ class CustomerServiceTest {
         KeycloakPropsConfig keycloakPropsConfig = mock(KeycloakPropsConfig.class);
         realmResource = mock(RealmResource.class);
         when(keycloakPropsConfig.getRealm()).thenReturn(REALM_NAME);
+        when(keycloakPropsConfig.getResource()).thenReturn("test-client");
         when(keycloak.realm(REALM_NAME)).thenReturn(realmResource);
         usersResource = mock(UsersResource.class);
         customerService = new CustomerService(keycloak, keycloakPropsConfig);
@@ -123,15 +130,14 @@ class CustomerServiceTest {
     }
 
     @Test
-    void testGetCustomers_hasError_throwForbiddenException() {
-
+    void testGetCustomers_hasError_throwAccessDeniedException() {
         when(usersResource.search(any(), anyInt(), anyInt()))
-            .thenThrow(new AccessDeniedException(ACCESS_DENIED_MESSAGE));
+            .thenThrow(new ForbiddenException("FORBIDDEN"));
 
         AccessDeniedException thrown = assertThrows(AccessDeniedException.class,
             () -> customerService.getCustomers(1));
 
-        assertTrue(thrown.getMessage().contains(ACCESS_DENIED_MESSAGE));
+        assertTrue(thrown.getMessage().contains("FORBIDDEN"));
     }
 
     @Test
@@ -179,6 +185,25 @@ class CustomerServiceTest {
     }
 
     @Test
+    void testDeleteCustomer_isUserNotFound_throwNotFoundException() {
+        UserResource userResource = mock(UserResource.class);
+        when(usersResource.get(USER_NAME)).thenReturn(userResource);
+        when(userResource.toRepresentation()).thenReturn(null);
+
+        NotFoundException thrown = assertThrows(NotFoundException.class,
+            () -> customerService.deleteCustomer(USER_NAME));
+        assertTrue(thrown.getMessage().contains("User not found"));
+    }
+
+    @Test
+    void testCreatePasswordCredentials_returnsCredentialWithPassword() {
+        CredentialRepresentation cred = CustomerService.createPasswordCredentials("secret123");
+        assertThat(cred.getType()).isEqualTo(CredentialRepresentation.PASSWORD);
+        assertThat(cred.getValue()).isEqualTo("secret123");
+        assertThat(cred.isTemporary()).isFalse();
+    }
+
+    @Test
     void testGetCustomerByEmail_isNormalCase_returnCustomerAdminVm() {
         when(usersResource.search(VALID_EMAIL, true)).thenReturn(getUserRepresentations());
         CustomerAdminVm adminVm = customerService.getCustomerByEmail(VALID_EMAIL);
@@ -203,15 +228,14 @@ class CustomerServiceTest {
     }
 
     @Test
-    void testGetCustomerByEmail_isAbnormalCase_throwForbiddenException() {
-
+    void testGetCustomerByEmail_isAbnormalCase_throwAccessDeniedException() {
         when(usersResource.search(VALID_EMAIL, true))
-            .thenThrow(new AccessDeniedException(ACCESS_DENIED_MESSAGE));
+            .thenThrow(new ForbiddenException("FORBIDDEN"));
 
         AccessDeniedException thrown = assertThrows(AccessDeniedException.class,
             () -> customerService.getCustomerByEmail(VALID_EMAIL));
 
-        assertTrue(thrown.getMessage().contains(ACCESS_DENIED_MESSAGE));
+        assertTrue(thrown.getMessage().contains("FORBIDDEN"));
     }
 
     @Test
@@ -230,15 +254,14 @@ class CustomerServiceTest {
     }
 
     @Test
-    void testGetCustomerProfile_isAbnormalCase_throwForbiddenException() {
-
+    void testGetCustomerProfile_isAbnormalCase_throwAccessDeniedException() {
         when(usersResource.get(USER_NAME))
-            .thenThrow(new AccessDeniedException(ACCESS_DENIED_MESSAGE));
+            .thenThrow(new ForbiddenException("FORBIDDEN"));
 
         AccessDeniedException thrown = assertThrows(AccessDeniedException.class,
             () -> customerService.getCustomerProfile(USER_NAME));
 
-        assertTrue(thrown.getMessage().contains(ACCESS_DENIED_MESSAGE));
+        assertTrue(thrown.getMessage().contains("FORBIDDEN"));
     }
 
     @Test
@@ -314,6 +337,18 @@ class CustomerServiceTest {
             "Doe", "123", "ADMIN");
 
         when(realmResource.users().search(anyString(), anyBoolean()))
+            .thenReturn(Collections.singletonList(mock(UserRepresentation.class)));
+
+        assertThrows(DuplicatedException.class, () -> customerService.create(customerPostVm));
+    }
+
+    @Test
+    void testCreateUser_whenEmailAlreadyExisted_thenThrowDuplicateException() {
+        CustomerPostVm customerPostVm = new CustomerPostVm("user1", "existing@example.com", "John",
+            "Doe", "123", "ADMIN");
+
+        when(realmResource.users().search(anyString(), anyBoolean())).thenReturn(Collections.emptyList());
+        when(realmResource.users().search(isNull(), isNull(), isNull(), eq("existing@example.com"), anyInt(), anyInt()))
             .thenReturn(Collections.singletonList(mock(UserRepresentation.class)));
 
         assertThrows(DuplicatedException.class, () -> customerService.create(customerPostVm));

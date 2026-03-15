@@ -72,12 +72,14 @@ class UserAddressControllerTest {
 
     @Test
     void testCreateAddress_whenNormalCase_responseUserAddressVm() throws Exception {
+        AddressPostVm addressPostVm = new AddressPostVm(
+            "John Doe", "123-456-7890", "123 Elm Street", "Springfield", "12345", 101L, 10L, 1L);
         UserAddressVm userAddressVm = getUserAddressVm();
         when(userAddressService.createAddress(any(AddressPostVm.class))).thenReturn(userAddressVm);
 
         mockMvc.perform(MockMvcRequestBuilders.post(USER_ADDRESS_BASE_URL)
                 .contentType("application/json")
-            .content(objectWriter.writeValueAsString(userAddressVm)))
+                .content(objectWriter.writeValueAsString(addressPostVm)))
             .andExpect(MockMvcResultMatchers.status().isOk())
             .andExpect(MockMvcResultMatchers.content().json(objectWriter.writeValueAsString(userAddressVm)));
     }
