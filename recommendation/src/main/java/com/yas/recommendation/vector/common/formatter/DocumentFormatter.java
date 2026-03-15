@@ -1,6 +1,6 @@
 package com.yas.recommendation.vector.common.formatter;
 
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.regex.Pattern;
 
