@@ -21,4 +21,53 @@
         <sonar.projectKey>nashtech-garage_yas-delivery</sonar.projectKey>
     </properties>
 
+    <dependencies>
+        <!-- Override to 4.0.3 for delivery only -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+            <version>4.0.3</version>
+        </dependency>
+        <!-- Force tomcat-embed-core 11.0.18: Snyk high-severity SNYK-JAVA-ORGAPACHETOMCATEMBED-15307822 (parent pulls 11.0.15 via starter-tomcat 4.0.2) -->
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-core</artifactId>
+            <version>11.0.18</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Override to fix Snyk high-severity: Allocation of Resources (keycloak path, inherited from parent) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.21.1</version>
+        </dependency>
+        <!-- Override to fix Snyk high-severity: tools.jackson.core (Jackson 3, inherited from parent) -->
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>
