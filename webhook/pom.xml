@@ -88,4 +88,57 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>jenkins-install-common-library</id>
+            <activation>
+                <property>
+                    <name>env.JENKINS_HOME</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-install-plugin</artifactId>
+                        <version>3.1.4</version>
+                        <executions>
+                            <execution>
+                                <id>install-common-library-main-jar</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>install-file</goal>
+                                </goals>
+                                <configuration>
+                                    <file>${project.basedir}/../common-library/target/common-library-${revision}.jar</file>
+                                    <groupId>com.yas</groupId>
+                                    <artifactId>common-library</artifactId>
+                                    <version>${revision}</version>
+                                    <packaging>jar</packaging>
+                                    <generatePom>true</generatePom>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>install-common-library-test-jar</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>install-file</goal>
+                                </goals>
+                                <configuration>
+                                    <file>${project.basedir}/../common-library/target/common-library-${revision}-tests.jar</file>
+                                    <groupId>com.yas</groupId>
+                                    <artifactId>common-library</artifactId>
+                                    <version>${revision}</version>
+                                    <classifier>tests</classifier>
+                                    <packaging>jar</packaging>
+                                    <generatePom>true</generatePom>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>
