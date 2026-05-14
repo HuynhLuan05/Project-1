@@ -26,12 +26,18 @@ spec:
     retries:
       attempts: 3
       perTryTimeout: 2s
-      retryOn: gateway-error,connect-failure,refused-stream
+      retryOn: 5xx,gateway-error,connect-failure,refused-stream
 ---
 {{- end }}
 {{- end }}
-
-
-
-
-
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: yas-mtls-destination
+  namespace: {{ $namespace }}
+spec:
+  host: "*.{{ $namespace }}.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

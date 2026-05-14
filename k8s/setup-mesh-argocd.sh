@@ -32,7 +32,13 @@ helm install kiali-server kiali/kiali-server -n istio-system --set service.type=
 
 echo "============================================================"
 echo "Cài đặt hoàn tất"
+echo "Bật Istio sidecar injection cho namespace dev và staging..."
+kubectl create namespace dev || true
+kubectl create namespace staging || true
+kubectl label namespace dev istio-injection=enabled --overwrite
+kubectl label namespace staging istio-injection=enabled --overwrite
 echo "Để lấy password ArgoCD, chạy lệnh: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
 echo "Để map port ArgoCD: kubectl port-forward svc/argocd-server -n argocd 8080:443"
 echo "Để map port Kiali: kubectl port-forward svc/kiali -n istio-system 20001:20001"
 echo "============================================================"
+
