@@ -9,7 +9,7 @@ service:
   nodePort: 30007
 
 env:
-  POSTGRES_USER: admin
+  POSTGRES_USER: yasadminuser
   POSTGRES_PASSWORD: admin
   POSTGRES_DB: keycloak
   PGDATA: /var/lib/postgresql/data/pgdata
