@@ -51,6 +51,7 @@ spec:
           volumeMounts:
             - mountPath: {{ .Values.persistence.mountPath }}
               name: postgredb
+              subPath: pgdata
             - mountPath: /docker-entrypoint-initdb.d/init-db.sh
               subPath: init-db.sh
               name: postgres-init-script
