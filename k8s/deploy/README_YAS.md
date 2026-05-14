@@ -1,95 +1,156 @@
-Here’s your guide rewritten clearly in English:
-
----
-
-# YAS Cluster Access Guide — For Members 2, 3, 4
-
 ## 📌 Cluster Information
 
-|                 |                         |
-| --------------- | ----------------------- |
-| **Minikube IP** | `192.168.58.2`          |
-| **Namespaces**  | `yas`, `dev`, `staging` |
+| Item             | Value                          |
+|------------------|-------------------------------|
+| **Project ID**   | `steady-datum-496203-r2`      |
+| **Cluster Name** | `yas-cluster`                 |
+| **Region**       | `australia-southeast1`        |
+| **Namespaces**   | `yas`, `dev`, `staging`       |
 
----
+***
 
-## 🔧 Step 1 — Install kubectl
+## Prerequisites
 
-### **Ubuntu / WSL2**
+Make sure the following tools are installed on your machine before starting:
 
-```bash
-curl -LO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-chmod +x kubectl && sudo mv kubectl /usr/local/bin/
-```
+- [gcloud CLI](https://cloud.google.com/sdk/docs/install)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
 
-### **Windows**
+***
 
-```powershell
-winget install Kubernetes.kubectl
-```
+## Step 1 — Install gcloud CLI
 
----
-
-## 🔑 Step 2 — Get kubeconfig from Member 1
-
-Contact Member 1 via private chat to receive the file `kubeconfig-yas.yaml`.
-
-Then run:
+### Linux / WSL (Ubuntu)
 
 ```bash
-mkdir -p ~/.kube
-cp kubeconfig-yas.yaml ~/.kube/config
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates gnupg curl
 
-# Verify connection
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
+  sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+
+sudo apt-get update && sudo apt-get install -y google-cloud-cli
+```
+
+### macOS
+
+```bash
+brew install --cask google-cloud-sdk
+```
+
+### Windows
+
+Download and run the installer from:
+https://cloud.google.com/sdk/docs/install#windows
+
+***
+
+## Step 2 — Install kubectl
+
+### Linux / WSL
+
+```bash
+sudo apt-get install -y kubectl
+```
+
+### macOS
+
+```bash
+brew install kubectl
+```
+
+### Windows
+
+```bash
+gcloud components install kubectl
+```
+
+***
+
+## Step 3 — Authenticate and Connect to the Cluster
+
+Run the following commands **in order**:
+
+```bash
+# 1. Activate the service account using the JSON key file
+gcloud auth activate-service-account --key-file=yas-team-key.json
+
+# 2. Set the GCP project
+gcloud config set project steady-datum-496203-r2
+
+# 3. Fetch kubeconfig credentials for the GKE cluster
+gcloud container clusters get-credentials yas-cluster \
+  --region australia-southeast1 \
+  --project steady-datum-496203-r2
+
+# 4. Verify the connection
 kubectl get nodes
 kubectl get pods -n yas
 ```
 
----
+### Expected Output
 
-## 🌐 Step 3 — Add entries to /etc/hosts
+```
+NAME                                       STATUS   ROLES    AGE
+gke-yas-cluster-default-pool-xxxx-xxxx     Ready    <none>   ...
 
-### **Linux / WSL2**
+NAME                          READY   STATUS    RESTARTS
+product-68b9c8c5d4-xxxxx      1/1     Running   0
+...
+```
+
+***
+
+## Step 4 — Add Entries to `/etc/hosts`
+
+The cluster exposes services via **NodePort**. You need to map the GKE node's external IP to domain names so you can access services in your browser.
+
+### Get the Node External IP
+
+```bash
+kubectl get nodes -o wide
+# Look at the EXTERNAL-IP column
+```
+
+### Linux / WSL
 
 ```bash
 sudo nano /etc/hosts
 ```
 
-Add:
+Add the following lines (replace `<NODE_EXTERNAL_IP>` with the IP from the command above):
 
 ```
-192.168.58.2  storefront.yas.local.com
-192.168.58.2  backoffice.yas.local.com
-192.168.58.2  api.yas.local.com
-192.168.58.2  identity.yas.local.com
-192.168.58.2  grafana.yas.local.com
-192.168.58.2  kibana.yas.local.com
-192.168.58.2  akhq.yas.local.com
-192.168.58.2  pgadmin.yas.local.com
+<NODE_EXTERNAL_IP>  storefront.yas.local.com
+<NODE_EXTERNAL_IP>  backoffice.yas.local.com
+<NODE_EXTERNAL_IP>  api.yas.local.com
+<NODE_EXTERNAL_IP>  identity.yas.local.com
 ```
 
-### **Windows**
+### Windows
 
-Open:
+Open `C:\Windows\System32\drivers\etc\hosts` using **Notepad as Administrator**, then add the same lines above.
 
-```
-C:\Windows\System32\drivers\etc\hosts
-```
+***
 
-(using Notepad as Administrator)
+## Step 6 — Access the Services
 
-Add:
+Once `/etc/hosts` is configured, open your browser and navigate to:
 
-```
-192.168.58.2  storefront.yas.local.com
-192.168.58.2  backoffice.yas.local.com
-192.168.58.2  api.yas.local.com
-192.168.58.2  identity.yas.local.com
-```
+| Service     | URL                                        | NodePort |
+|-------------|---------------------------------------------|----------|
+| Storefront  | `http://storefront.yas.local.com:30001`    | `30001`  |
+| Backoffice  | `http://backoffice.yas.local.com:30002`    | `30002`  |
+| API Gateway | `http://api.yas.local.com:30003`           | `30003`  |
+| Identity    | `http://identity.yas.local.com:30004`      | `30004`  |
 
----
+> Ask **Member 1** to confirm the exact NodePort numbers if the above are outdated.
 
-## ✅ Step 4 — Verify Setup
+***
+
+## Verify Setup
 
 ```bash
 # Check running pods
@@ -102,20 +163,20 @@ kubectl get namespaces
 kubectl get svc -n yas | grep NodePort
 ```
 
-### Expected Results:
+***
 
-* ~20 pods with status `1/1 Running`
-* Namespaces: `yas`, `dev`, `staging`
-* NodePorts: `30001`, `30002`, `30003`
+## Check / Switch Context
 
----
+```bash
+# List all configured contexts
+kubectl config get-contexts
 
-## ⚠️ Notes
+# Show the current active context
+kubectl config current-context
 
-* The cluster **only works when Member 1’s machine is running**
-* You must be on the **same LAN**, or use **Tailscale / Ngrok** for remote access
-* **Do NOT commit** the kubeconfig file to GitHub
+# Switch back to the GKE cluster if needed
+kubectl config use-context gke_steady-datum-496203-r2_australia-southeast1_yas-cluster
+```
 
----
+***
 
-If you want, I can also turn this into a polished README.md for your repo.

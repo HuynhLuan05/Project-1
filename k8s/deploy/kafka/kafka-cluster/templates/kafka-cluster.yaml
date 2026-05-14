@@ -25,7 +25,7 @@ spec:
       volumes:
         - id: 0
           type: persistent-claim
-          size: 100Gi
+          size: {{ .Values.kafka.storeSize }}
           deleteClaim: false
     config:
       offsets.topic.replication.factor: 1
@@ -37,7 +37,7 @@ spec:
     replicas: {{ .Values.zookeeper.replicas }}
     storage:
       type: persistent-claim
-      size: {{ .Values.zookeeper.storeSize }}
+      size: {{ .Values.zookeeper.storeSize | quote }}
       deleteClaim: false
   entityOperator:
     topicOperator: {}
