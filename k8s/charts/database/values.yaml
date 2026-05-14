@@ -31,7 +31,7 @@ initScript:
   content: |
     #!/bin/bash
     set -e
-    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+    echo '
         CREATE DATABASE product;
         CREATE DATABASE media;
         CREATE DATABASE cart;
@@ -44,5 +44,4 @@ initScript:
         CREATE DATABASE rating;
         CREATE DATABASE search;
         CREATE DATABASE tax;
-
-    EOSQL
+    ' | psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB"
