@@ -19,7 +19,7 @@ env:
   KEYCLOAK_USER: admin
   KEYCLOAK_PASSWORD: admin
   DB_VENDOR: POSTGRES
-  DB_USER: admin
+  DB_USER: yasadminuser
   DB_PASSWORD: admin
   DB_ADDR: postgres
   DB_DATABASE: keycloak
