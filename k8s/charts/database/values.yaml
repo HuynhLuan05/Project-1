@@ -9,9 +9,10 @@ service:
   nodePort: 30007
 
 env:
-  POSTGRES_USER: admin
+  POSTGRES_USER: yasadminuser
   POSTGRES_PASSWORD: admin
   POSTGRES_DB: keycloak
+  PGDATA: /var/lib/postgresql/data/pgdata
 
 resources:
   requests:
@@ -30,7 +31,7 @@ initScript:
   content: |
     #!/bin/bash
     set -e
-    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+    echo '
         CREATE DATABASE product;
         CREATE DATABASE media;
         CREATE DATABASE cart;
@@ -43,5 +44,4 @@ initScript:
         CREATE DATABASE rating;
         CREATE DATABASE search;
         CREATE DATABASE tax;
-
-    EOSQL
+    ' | psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB"
