@@ -10,10 +10,10 @@ service:
 resources:
   requests:
     memory: "512Mi"
-    cpu: "250m"
-  limits:
-    memory: "1Gi"
     cpu: "500m"
+  limits:
+    memory: "2Gi"
+    cpu: "1"
 
 env:
   KEYCLOAK_USER: admin
@@ -34,9 +34,10 @@ persistence:
 readinessProbe:
   initialDelaySeconds: 30
   periodSeconds: 10
+  timeoutSeconds: 5
   failureThreshold: 10
 
 startupProbe:
   initialDelaySeconds: 60
   periodSeconds: 10
-  failureThreshold: 30
+  failureThreshold: 20
