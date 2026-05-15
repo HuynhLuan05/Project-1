@@ -26,7 +26,7 @@ spec:
   template:
     metadata:
       annotations:
-        proxy.istio.io/config: '{"holdApplicationUntilProxyStarts": true}'
+        sidecar.istio.io/inject: "false"
       labels:
         app: keycloak
     spec:
