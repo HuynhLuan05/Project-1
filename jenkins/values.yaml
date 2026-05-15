@@ -1,0 +1,143 @@
+# Helm values for the official jenkins/jenkins chart.
+# Installs Jenkins on GKE with:
+#   * a LoadBalancer service for the controller UI
+#   * the plugins needed for Pipeline + Kubernetes agents + JCasC + Job DSL
+#   * an ephemeral agent pod template ("yas-deployer") that mounts the
+#     `yas-deployer` ServiceAccount so `kubectl` / `helm` inside the agent
+#     can drive the `yas` namespace (RBAC granted by jenkins/rbac.yaml).
+#   * JCasC seeding of the `developer_build` and `teardown` pipeline jobs,
+#     each loading its Jenkinsfile from the team fork.
+
+controller:
+  serviceType: LoadBalancer
+  servicePort: 8080
+
+  # Keep requests modest so the pod can schedule onto existing Autopilot nodes
+  # (GCE quota in this project is tight — new-node scale-ups have been failing).
+  # Limits stay higher so the JVM can burst during plugin init.
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1500m"
+      memory: "2Gi"
+
+  # Sized for the 2Gi memory limit. Skip the setup wizard so JCasC takes over.
+  javaOpts: "-XX:MaxRAMPercentage=60.0 -Djenkins.install.runSetupWizard=false"
+
+  # Autopilot first-boot is slow: PVC provision + plugin init + JCasC parse.
+  # The chart's default startup probe gives ~5 min; give it 15 instead.
+  probes:
+    startupProbe:
+      httpGet:
+        path: '{{ default "" .Values.controller.jenkinsUriPrefix }}/login'
+        port: http
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 90
+    livenessProbe:
+      failureThreshold: 5
+      httpGet:
+        path: '{{ default "" .Values.controller.jenkinsUriPrefix }}/login'
+        port: http
+      periodSeconds: 10
+      timeoutSeconds: 5
+
+  # SafeHTML markup formatter for currentBuild.description. The chart owns this
+  # key and writes it into JCasC — don't duplicate it in configScripts.
+  markupFormatter: rawHtml
+
+  installPlugins:
+    - kubernetes:latest
+    - workflow-aggregator:latest
+    - workflow-job:latest
+    - git:latest
+    - github:latest
+    - github-branch-source:latest
+    - pipeline-utility-steps:latest
+    - configuration-as-code:latest
+    - job-dsl:latest
+    - description-setter:latest
+    - antisamy-markup-formatter:latest
+    - blueocean:latest
+    - credentials-binding:latest
+
+  JCasC:
+    defaultConfig: true
+    configScripts:
+      yas-jobs: |
+        jobs:
+          - script: >
+              pipelineJob('developer_build') {
+                description('Deploy YAS to the `yas` namespace. Pick a branch per service; non-main branches deploy the Docker Hub commit-SHA image, main keeps the chart default ghcr.io image.')
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote { url('https://github.com/HuynhLuan05/Project-1.git') }
+                        branch('*/feat/jenkins-cd')
+                      }
+                    }
+                    scriptPath('jenkins/jobs/developer_build/Jenkinsfile')
+                    lightweight(true)
+                  }
+                }
+              }
+          - script: >
+              pipelineJob('teardown') {
+                description('helm uninstall every YAS release in the `yas` namespace.')
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote { url('https://github.com/HuynhLuan05/Project-1.git') }
+                        branch('*/feat/jenkins-cd')
+                      }
+                    }
+                    scriptPath('jenkins/jobs/teardown/Jenkinsfile')
+                    lightweight(true)
+                  }
+                }
+              }
+
+persistence:
+  enabled: true
+  storageClass: standard-rwo
+  size: 20Gi
+
+agent:
+  enabled: true
+  # Default builtin agent template — leave on for general jobs.
+  podName: jenkins-agent
+  customJenkinsLabels:
+    - jenkins-agent
+
+additionalAgents:
+  yasDeployer:
+    podName: yas-deployer
+    customJenkinsLabels:
+      - yas-deployer
+    # Custom image with kubectl + helm + yq baked in (built from jenkins/agent.Dockerfile).
+    # Replace the registry/owner before `helm upgrade`.
+    image:
+      repository: docker.io/anhnguyen835/yas-jenkins-agent
+      tag: "1"
+    serviceAccount: yas-deployer
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "2Gi"
+
+serviceAccount:
+  create: true
+  name: jenkins
+
+serviceAccountAgent:
+  # The chart-managed SA used by additionalAgents' fallback; the yasDeployer
+  # template overrides serviceAccount to `yas-deployer` (defined in rbac.yaml).
+  create: true
+  name: jenkins-agent

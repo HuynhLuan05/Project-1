@@ -1,0 +1,83 @@
+// Project 02 — Req. 5
+// Teardown pipeline: helm uninstall every release in the `yas` namespace.
+// Optionally also delete PVCs (Postgres/Kafka/Elasticsearch data) — off by default
+// to avoid wiping shared state the rest of the team depends on.
+
+properties([
+  parameters([
+    booleanParam(
+      name: 'CLEAN_PVC',
+      defaultValue: false,
+      description: 'Also delete all PersistentVolumeClaims in the yas namespace (DESTROYS Postgres/Kafka data).'
+    )
+  ]),
+  buildDiscarder(logRotator(numToKeepStr: '20'))
+])
+
+pipeline {
+  agent {
+    kubernetes {
+      label 'yas-deployer'
+      defaultContainer 'jnlp'
+    }
+  }
+
+  options {
+    timeout(time: 20, unit: 'MINUTES')
+    timestamps()
+  }
+
+  environment {
+    NAMESPACE = 'yas'
+  }
+
+  stages {
+    stage('List existing releases') {
+      steps {
+        sh "helm list -n ${NAMESPACE}"
+      }
+    }
+
+    stage('helm uninstall all') {
+      steps {
+        sh '''
+          set -euo pipefail
+          releases=$(helm list -n "$NAMESPACE" -q || true)
+          if [ -z "$releases" ]; then
+            echo "No releases in namespace $NAMESPACE — nothing to do."
+            exit 0
+          fi
+          echo "Uninstalling: $releases"
+          echo "$releases" | xargs -r -n1 helm uninstall -n "$NAMESPACE"
+        '''
+      }
+    }
+
+    stage('Optional: delete PVCs') {
+      when { expression { return params.CLEAN_PVC } }
+      steps {
+        sh '''
+          echo "CLEAN_PVC=true — deleting all PVCs in $NAMESPACE"
+          kubectl -n "$NAMESPACE" delete pvc --all --wait=true || true
+        '''
+      }
+    }
+
+    stage('Verify') {
+      steps {
+        sh '''
+          echo "Remaining releases:"
+          helm list -n "$NAMESPACE"
+          echo
+          echo "Remaining pods (should drain shortly):"
+          kubectl -n "$NAMESPACE" get pods || true
+        '''
+      }
+    }
+  }
+
+  post {
+    success { echo "Teardown complete in namespace ${env.NAMESPACE}." }
+    failure { echo "Teardown failed — check logs." }
+  }
+}

@@ -1,0 +1,237 @@
+// Project 02 — Req. 4
+// Parameterized developer_build pipeline.
+//
+// For each service the developer can supply a branch name. Branches != "main"
+// are resolved (via `git ls-remote`) to the HEAD commit SHA and that SHA becomes
+// the image tag pulled from Docker Hub. Services left on "main" keep the chart's
+// default ghcr.io/nashtech-garage/yas-<svc>:latest image.
+//
+// The job is seeded into Jenkins by JCasC (jenkins/values.yaml). The Jenkinsfile
+// is read from the team fork; the actual deploy uses helm against the `yas`
+// namespace on the in-cluster GKE.
+
+@Library('') _
+
+// Single source of truth for chartable services.
+//   key  = chart name under k8s/charts/
+//   val  = [imageKey, dockerhubImageName]
+//          imageKey is the top-level Helm values key ("backend" or "ui");
+//          dockerhubImageName matches what Member 2's CI publishes to Docker Hub.
+def SERVICES = [
+  'backoffice-bff' : ['backend', 'yas-backoffice-bff'],
+  'storefront-bff' : ['backend', 'yas-storefront-bff'],
+  'backoffice-ui'  : ['ui',      'yas-backoffice'],
+  'storefront-ui'  : ['ui',      'yas-storefront'],
+  'cart'           : ['backend', 'yas-cart'],
+  'customer'       : ['backend', 'yas-customer'],
+  'inventory'      : ['backend', 'yas-inventory'],
+  'location'       : ['backend', 'yas-location'],
+  'media'          : ['backend', 'yas-media'],
+  'order'          : ['backend', 'yas-order'],
+  'payment'        : ['backend', 'yas-payment'],
+  'payment-paypal' : ['backend', 'yas-payment-paypal'],
+  'product'        : ['backend', 'yas-product'],
+  'promotion'      : ['backend', 'yas-promotion'],
+  'rating'         : ['backend', 'yas-rating'],
+  'recommendation' : ['backend', 'yas-recommendation'],
+  'search'         : ['backend', 'yas-search'],
+  'tax'            : ['backend', 'yas-tax'],
+  'webhook'        : ['backend', 'yas-webhook'],
+  'sampledata'     : ['backend', 'yas-sampledata'],
+]
+
+def paramName = { svc -> 'BRANCH_' + svc.toUpperCase().replace('-', '_') }
+
+// YAS source fork — used only to resolve `branch -> HEAD SHA` so we know which
+// Docker Hub tag Member 2's CI published. Distinct from the SCM the Jenkinsfile
+// itself is loaded from (that's set by JCasC in jenkins/values.yaml).
+def REPO_URL = 'https://github.com/HuynhLuan05/YAS.git'
+
+properties([
+  parameters(
+    SERVICES.keySet().collect { svc ->
+      string(
+        name: paramName(svc),
+        defaultValue: 'main',
+        description: "Branch for ${svc}. 'main' = chart default (ghcr.io :latest). Anything else resolves the branch HEAD SHA and pulls docker.io/<DOCKERHUB_USER>/${SERVICES[svc][1]}:<sha>."
+      )
+    }
+  ),
+  buildDiscarder(logRotator(numToKeepStr: '20'))
+])
+
+pipeline {
+  agent {
+    kubernetes {
+      label 'yas-deployer'
+      defaultContainer 'jnlp'
+    }
+  }
+
+  options {
+    timeout(time: 30, unit: 'MINUTES')
+    timestamps()
+    ansiColor('xterm')
+  }
+
+  environment {
+    NAMESPACE   = 'yas'
+    CHARTS_DIR  = 'k8s/charts'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Resolve SHAs') {
+      steps {
+        script {
+          env.RESOLVED_TAGS_JSON = ''
+          def tags = [:]
+          def rows = []
+
+          SERVICES.each { svc, meta ->
+            def branch = params[paramName(svc)] ?: 'main'
+            if (branch == 'main' || branch.trim() == '') {
+              tags[svc] = null
+              rows << "${svc.padRight(18)} | ${branch.padRight(30)} | (chart default / ghcr.io :latest)"
+            } else {
+              def sha = sh(
+                returnStdout: true,
+                script: "git ls-remote ${REPO_URL} refs/heads/${branch} | awk '{print \$1}'"
+              ).trim()
+              if (!sha) {
+                error("Could not resolve SHA for ${svc} on branch '${branch}' at ${REPO_URL}. Did the branch exist and was it pushed?")
+              }
+              tags[svc] = sha
+              rows << "${svc.padRight(18)} | ${branch.padRight(30)} | ${sha}"
+            }
+          }
+
+          echo "── Resolved image tags ──\n" +
+               "service             | branch                         | tag\n" +
+               "-".multiply(90) + "\n" +
+               rows.join('\n')
+
+          writeJSON file: 'resolved-tags.json', json: tags, pretty: 2
+          archiveArtifacts artifacts: 'resolved-tags.json', allowEmptyArchive: false
+
+          // Stash for downstream stages (script-level closures can't reuse local vars reliably).
+          env._TAGS_JSON = writeJSON(returnText: true, json: tags)
+        }
+      }
+    }
+
+    stage('Helm dependency build') {
+      steps {
+        script {
+          SERVICES.keySet().each { svc ->
+            sh "helm dependency build ${CHARTS_DIR}/${svc} || true"
+          }
+        }
+      }
+    }
+
+    stage('Deploy (helm upgrade --install)') {
+      steps {
+        withCredentials([string(credentialsId: 'dockerhub-username', variable: 'DOCKERHUB_USER')]) {
+          script {
+            def tags = readJSON(text: env._TAGS_JSON)
+
+            // Roughly mirror deploy-yas-applications.sh: bff/ui first, then backends.
+            def order = [
+              'backoffice-bff', 'storefront-bff', 'backoffice-ui', 'storefront-ui',
+              'customer', 'product', 'media', 'inventory', 'location',
+              'cart', 'order', 'payment', 'payment-paypal',
+              'promotion', 'rating', 'recommendation',
+              'search', 'tax', 'webhook', 'sampledata',
+            ]
+
+            order.each { svc ->
+              def meta     = SERVICES[svc]
+              def imageKey = meta[0]                    // backend | ui
+              def imageName= meta[1]                    // yas-cart | yas-storefront | ...
+              def sha      = tags[svc]
+
+              // Ingress host overrides — match deploy-yas-applications.sh defaults.
+              def hostFlag = ''
+              switch (svc) {
+                case 'storefront-bff':
+                  hostFlag = "--set backend.ingress.host=storefront.yas.local.com"
+                  break
+                case 'backoffice-bff':
+                  hostFlag = "--set backend.ingress.host=backoffice.yas.local.com"
+                  break
+                case 'storefront-ui':
+                case 'backoffice-ui':
+                  hostFlag = ''
+                  break
+                default:
+                  hostFlag = "--set backend.ingress.host=api.yas.local.com"
+              }
+
+              def imageFlags = ''
+              if (sha) {
+                imageFlags =
+                  "--set ${imageKey}.image.repository=docker.io/${env.DOCKERHUB_USER}/${imageName} " +
+                  "--set ${imageKey}.image.tag=${sha}"
+              }
+
+              echo "── Deploying ${svc} ${sha ? "(docker.io/${env.DOCKERHUB_USER}/${imageName}:${sha})" : '(chart default)'} ──"
+              sh """
+                helm upgrade --install ${svc} ${CHARTS_DIR}/${svc} \\
+                  --namespace ${NAMESPACE} --create-namespace \\
+                  ${imageFlags} ${hostFlag} \\
+                  --wait --timeout 5m
+              """
+            }
+          }
+        }
+      }
+    }
+
+    stage('Publish access URL') {
+      steps {
+        script {
+          def nodeIp = sh(
+            returnStdout: true,
+            script: '''kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}' '''
+          ).trim()
+
+          if (!nodeIp) {
+            // GKE private-node clusters might only have InternalIP — fall back so the URL still renders.
+            nodeIp = sh(
+              returnStdout: true,
+              script: '''kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' '''
+            ).trim()
+          }
+
+          def hostsLine = "${nodeIp} storefront.yas.local.com backoffice.yas.local.com api.yas.local.com identity.yas.local.com"
+
+          currentBuild.description = """\
+<b>Add to /etc/hosts:</b> <code>${hostsLine}</code>
+<ul>
+  <li><a href='http://storefront.yas.local.com:30001/' target='_blank'>Storefront (NodePort 30001)</a></li>
+  <li><a href='http://backoffice.yas.local.com:30002/' target='_blank'>Backoffice (NodePort 30002)</a></li>
+  <li><a href='http://api.yas.local.com:30003/swagger-ui/' target='_blank'>API / Swagger (NodePort 30003)</a></li>
+</ul>"""
+
+          echo "Node external IP: ${nodeIp}"
+          echo "Add to /etc/hosts: ${hostsLine}"
+        }
+      }
+    }
+  }
+
+  post {
+    success {
+      echo 'developer_build complete — check the build description for the access URL.'
+    }
+    failure {
+      echo 'developer_build failed — inspect the failing stage logs.'
+    }
+  }
+}
