@@ -40,4 +40,5 @@ readinessProbe:
 startupProbe:
   initialDelaySeconds: 60
   periodSeconds: 10
-  failureThreshold: 20
+  timeoutSeconds: 5
+  failureThreshold: 40
