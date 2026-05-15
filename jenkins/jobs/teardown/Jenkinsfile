@@ -15,12 +15,7 @@ properties([
 ])
 
 pipeline {
-  agent {
-    kubernetes {
-      label 'yas-deployer'
-      defaultContainer 'jnlp'
-    }
-  }
+  agent { label 'yas-deployer' }
 
   options {
     timeout(time: 20, unit: 'MINUTES')

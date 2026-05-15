@@ -59,12 +59,11 @@ properties([
 ])
 
 pipeline {
-  agent {
-    kubernetes {
-      label 'yas-deployer'
-      defaultContainer 'jnlp'
-    }
-  }
+  // Pick the pre-configured `yas-deployer` pod template (defined under
+  // additionalAgents.yasDeployer in jenkins/values.yaml). Using the inline
+  // `kubernetes { ... }` block would create a *new* template, bypassing
+  // our SA + image config.
+  agent { label 'yas-deployer' }
 
   options {
     timeout(time: 30, unit: 'MINUTES')
