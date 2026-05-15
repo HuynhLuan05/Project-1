@@ -10,8 +10,6 @@
 // is read from the team fork; the actual deploy uses helm against the `yas`
 // namespace on the in-cluster GKE.
 
-@Library('') _
-
 // Single source of truth for chartable services.
 //   key  = chart name under k8s/charts/
 //   val  = [imageKey, dockerhubImageName]
