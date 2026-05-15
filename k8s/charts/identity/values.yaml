@@ -32,6 +32,11 @@ persistence:
   configMapName: yas-realm-config
 
 readinessProbe:
-  initialDelaySeconds: 120
+  initialDelaySeconds: 30
   periodSeconds: 10
-  failureThreshold: 20
+  failureThreshold: 10
+
+startupProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  failureThreshold: 30
