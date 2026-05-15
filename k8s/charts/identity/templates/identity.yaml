@@ -51,6 +51,7 @@ spec:
             port: {{ .Values.service.targetPort }}
           initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
           failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
         startupProbe:
           httpGet:
@@ -58,6 +59,7 @@ spec:
             port: {{ .Values.service.targetPort }}
           initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
           failureThreshold: {{ .Values.startupProbe.failureThreshold }}
       volumes:
       - name: yas-realm-volume
