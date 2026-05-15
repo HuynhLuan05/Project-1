@@ -149,7 +149,10 @@ pipeline {
               def meta     = SERVICES[svc]
               def imageKey = meta[0]                    // backend | ui
               def imageName= meta[1]                    // yas-cart | yas-storefront | ...
-              def sha      = tags[svc]
+              def rawSha   = tags[svc]
+              // readJSON can hand back the literal string "null" for JSON nulls
+              // depending on plugin version — treat both as "use chart default".
+              def sha = (rawSha && rawSha.toString() != 'null') ? rawSha.toString() : ''
 
               // Ingress host overrides — match deploy-yas-applications.sh defaults.
               def hostFlag = ''
