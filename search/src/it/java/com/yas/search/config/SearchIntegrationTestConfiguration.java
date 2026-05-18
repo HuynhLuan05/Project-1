@@ -44,6 +44,14 @@ public class SearchIntegrationTestConfiguration {
         return new ElasticTestContainer(elasticSearchVersion);
     }
 
+    @Bean
+    public DynamicPropertyRegistrar elasticsearchProperties(ElasticTestContainer elasticTestContainer) {
+        return registry -> registry.add(
+            "elasticsearch.url",
+            () -> elasticTestContainer.getHost() + ":" + elasticTestContainer.getMappedPort(9200)
+        );
+    }
+
     @Bean(destroyMethod = "stop")
     public KeycloakContainer keycloakContainer() {
         return new KeycloakContainer()
