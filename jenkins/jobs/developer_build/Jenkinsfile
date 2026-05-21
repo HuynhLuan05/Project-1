@@ -181,9 +181,9 @@ pipeline {
               echo "── Deploying ${svc} ${sha ? "(docker.io/${env.DOCKERHUB_USER}/${imageName}:${sha})" : '(chart default)'} ──"
               sh """
                 helm upgrade --install ${svc} ${CHARTS_DIR}/${svc} \\
-                  --namespace ${NAMESPACE} --create-namespace \\
+                  --namespace ${NAMESPACE} \\
                   ${imageFlags} ${hostFlag} \\
-                  --wait --timeout 10m
+                  --wait --timeout 15m
               """
             }
           }
