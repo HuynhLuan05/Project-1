@@ -97,3 +97,13 @@ webhook:
   backend:
     image:
       tag: "v1.0.0"
+
+# ── Infrastructure overrides for Staging (Avoid NodePort conflicts with Dev) ──
+database:
+  service:
+    nodePort: 30107
+
+jaeger:
+  service:
+    otlpGrpcNodePort: 30117
+    otlpHttpNodePort: 30118
