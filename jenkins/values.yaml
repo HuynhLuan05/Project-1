@@ -116,13 +116,13 @@ additionalAgents:
     idleMinutes: 0
     # Custom image with kubectl + helm + yq baked in (built from jenkins/agent.Dockerfile).
     image:
-      repository: docker.io/anhnguyen835/yas-jenkins-agent
-      tag: "3"
+      repository: docker.io/ntanh23/yas-jenkins-agent
+      tag: "1"
     serviceAccount: yas-deployer
     resources:
       requests:
-        cpu: "200m"
-        memory: "512Mi"
+        cpu: "50m"
+        memory: "128Mi"
       limits:
         cpu: "1"
         memory: "1Gi"
