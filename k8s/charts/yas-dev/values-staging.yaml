@@ -7,25 +7,25 @@ storefront-bff:
     serviceAccount:
       create: true
     image:
-      tag: "v1.0.0"        
+      tag: "latest"        
 backoffice-bff:
   backend:
     fullnameOverride: backoffice-bff-staging
     serviceAccount:
       create: true
     image:
-      tag: "v1.0.0"        
+      tag: "latest"        
 
 # ── UI Services ──
 storefront-ui:
   ui:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 backoffice-ui:
   ui:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 # ── API Documentation ──
 swagger-ui:
@@ -36,67 +36,67 @@ swagger-ui:
 product:
   backend:
     image:
-      tag: "v1.0.0"        
+      tag: "latest"        
 
 media:
   backend:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 cart:
   backend:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 order:
   backend:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 customer:
   backend:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 inventory:
   backend:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 location:
   backend:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 payment:
   backend:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 promotion:
   backend:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 rating:
   backend:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 search:
   backend:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 tax:
   backend:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 webhook:
   backend:
     image:
-      tag: "v1.0.0"
+      tag: "latest"
 
 # ── Infrastructure overrides for Staging (Avoid NodePort conflicts with Dev) ──
 database:
