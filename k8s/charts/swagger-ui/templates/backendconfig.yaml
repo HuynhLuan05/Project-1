@@ -1,0 +1,13 @@
+{{- if .Values.backendConfig.enabled }}
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: {{ include "swagger-ui.fullname" . }}
+  labels:
+    {{- include "swagger-ui.labels" . | nindent 4 }}
+spec:
+  healthCheck:
+    type: HTTP
+    port: {{ .Values.service.port }}
+    requestPath: {{ .Values.backendConfig.healthCheckPath }}
+{{- end }}

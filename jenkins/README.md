@@ -89,21 +89,23 @@ In Jenkins UI: **Manage Jenkins → Credentials → System → Global → Add Cr
 
 ### Accessing the deployed app
 
-The build description prints the worker node external IP plus a one-line `/etc/hosts` patch. Append it on your laptop:
+The build description prints the **Ingress LoadBalancer IP** (from `ingress/yas-ingress` in `yas`) plus a one-line `/etc/hosts` patch. Append it on your laptop:
 
 ```
-<NODE_IP> storefront.yas.local.com backoffice.yas.local.com api.yas.local.com identity.yas.local.com
+<INGRESS_LB_IP> storefront.yas.local.com backoffice.yas.local.com api.yas.local.com identity.yas.local.com
 ```
 
-Then open:
+Then open (port **80** — BFF/UI are `ClusterIP` + Ingress, not NodePort):
 
-| Service     | URL                                         |
-|-------------|---------------------------------------------|
-| Storefront  | `http://storefront.yas.local.com:30001/`    |
-| Backoffice  | `http://backoffice.yas.local.com:30002/`    |
-| API gateway | `http://api.yas.local.com:30003/swagger-ui/`|
+| Service     | URL                                          |
+|-------------|----------------------------------------------|
+| Storefront  | `http://storefront.yas.local.com/`           |
+| Backoffice  | `http://backoffice.yas.local.com/`           |
+| API / Swagger | `http://api.yas.local.com/swagger-ui/` (same GCE LB IP; specs at `http://api.yas.local.com/<service>/v3/api-docs`) |
 
-NodePort numbers come from `k8s/deploy/README_YAS.md`. If Member 1 changed them, `kubectl -n yas get svc | grep NodePort` is authoritative.
+After deploy, run `helm upgrade swagger-ui` with `apiDocsBaseUrl=http://api.yas.local.com` (no `:30003`) and `kubectl apply -f k8s/deploy/yas-ingress-gce.yaml` so the GCE LB routes `/product`, `/media`, … and `/swagger-ui`. Open Swagger on **`api.yas.local.com`**, not the swagger Service’s separate LoadBalancer IP — otherwise the browser blocks cross-origin fetches (CORS).
+
+Legacy NodePort docs (`30001`–`30003`) in `k8s/deploy/README_YAS.md` apply only when Member 1 exposes services as `NodePort`.
 
 ---
 
@@ -122,5 +124,5 @@ NodePort numbers come from `k8s/deploy/README_YAS.md`. If Member 1 changed them,
 - **`swagger-ui` is intentionally not parameterised** — its chart pulls the upstream `swaggerapi/swagger-ui` image, not a YAS-built one. Re-running `deploy-yas-applications.sh` once initially gets it standing; afterwards `helm upgrade` on the YAS services leaves it alone.
 - **UI charts use `--set ui.image.*`**, not `backend.image.*`. The Jenkinsfile registry encodes this per-service.
 - **No GitHub webhook**: Req. 6 (auto-deploy `main`/`v*.*.*`) is owned by Member 4 via ArgoCD (`k8s/argocd/{dev,staging}-app.yaml`). Adding a webhook here would double-deploy.
-- **Node external IP**: if you're on a GKE private-node cluster, nodes have no `ExternalIP` and the Jenkinsfile falls back to `InternalIP`. In that case, swap the LoadBalancer for an Ingress, or expose a bastion + `/etc/hosts` to the internal IP from a VPN.
+- **Ingress vs node IP**: the publish stage prefers `yas-ingress` LB IP. If Ingress has no `ADDRESS` yet, it falls back to the node IP — links still use port 80 hostnames; ensure Ingress is ready or use a VPN/bastion to reach internal IPs on private-node clusters.
 - **First run on an empty namespace**: by design, `developer_build` with all defaults brings up the full app (20 releases) against the chart's ghcr.io baseline. Use this to re-create the namespace after `teardown`.

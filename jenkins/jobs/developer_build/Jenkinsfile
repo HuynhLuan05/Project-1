@@ -193,31 +193,62 @@ pipeline {
     stage('Publish access URL') {
       steps {
         script {
-          def nodeIp = sh(
+          // Prefer the nginx Ingress LB (BFF/UI charts use ClusterIP + Ingress, not NodePort).
+          def accessIp = sh(
             returnStdout: true,
-            script: '''kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}' '''
+            script: '''kubectl get ingress yas-ingress -n yas -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true'''
           ).trim()
 
-          if (!nodeIp) {
-            // GKE private-node clusters might only have InternalIP — fall back so the URL still renders.
-            nodeIp = sh(
+          if (!accessIp) {
+            accessIp = sh(
               returnStdout: true,
-              script: '''kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' '''
+              script: '''kubectl get ingress -n yas -o jsonpath='{range .items[*]}{.status.loadBalancer.ingress[0].ip}{"\\n"}{end}' 2>/dev/null | grep -m1 . || true'''
             ).trim()
           }
 
-          def hostsLine = "${nodeIp} storefront.yas.local.com backoffice.yas.local.com api.yas.local.com identity.yas.local.com"
+          def accessMode = 'ingress'
+          if (!accessIp) {
+            accessMode = 'node-fallback'
+            accessIp = sh(
+              returnStdout: true,
+              script: '''kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}' '''
+            ).trim()
+            if (!accessIp) {
+              accessIp = sh(
+                returnStdout: true,
+                script: '''kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' '''
+              ).trim()
+            }
+          }
+
+          def hostsLine = "${accessIp} storefront.yas.local.com backoffice.yas.local.com api.yas.local.com identity.yas.local.com"
+
+          def urlBlock = ''
+          if (accessMode == 'ingress') {
+            urlBlock = """\
+<ul>
+  <li><a href='http://storefront.yas.local.com/' target='_blank'>Storefront</a></li>
+  <li><a href='http://${accessIp}/admin/' target='_blank'>Backoffice</a></li>
+  <li><a href='http://api.yas.local.com/swagger-ui/' target='_blank'>API / Swagger</a> (same origin as OpenAPI specs)</li>
+</ul>
+<p><i>Apply <code>k8s/deploy/yas-ingress-gce.yaml</code> if <code>/swagger-ui</code> or API docs fail. Do not use the swagger Service LB on :8080 — CORS blocks spec fetch.</i></p>"""
+          } else {
+            urlBlock = """\
+<p><i>No Ingress LB IP found — falling back to node IP.</i></p>
+<ul>
+  <li><a href='http://storefront.yas.local.com/' target='_blank'>Storefront</a></li>
+  <li><a href='http://backoffice.yas.local.com/' target='_blank'>Backoffice</a></li>
+  <li><a href='http://api.yas.local.com/swagger-ui/' target='_blank'>API / Swagger</a></li>
+</ul>"""
+          }
 
           currentBuild.description = """\
 <b>Add to /etc/hosts:</b> <code>${hostsLine}</code>
-<ul>
-  <li><a href='http://storefront.yas.local.com:30001/' target='_blank'>Storefront (NodePort 30001)</a></li>
-  <li><a href='http://backoffice.yas.local.com:30002/' target='_blank'>Backoffice (NodePort 30002)</a></li>
-  <li><a href='http://api.yas.local.com:30003/swagger-ui/' target='_blank'>API / Swagger (NodePort 30003)</a></li>
-</ul>"""
+${urlBlock}"""
 
-          echo "Node external IP: ${nodeIp}"
+          echo "Access IP (${accessMode}): ${accessIp}"
           echo "Add to /etc/hosts: ${hostsLine}"
+          echo "Swagger UI: http://api.yas.local.com/swagger-ui/ (via GCE ingress; ensure yas-ingress-gce.yaml is applied)"
         }
       }
     }

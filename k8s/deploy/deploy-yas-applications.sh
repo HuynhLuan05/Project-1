@@ -32,7 +32,10 @@ sleep 60
 
 helm upgrade --install swagger-ui ../charts/swagger-ui \
 --namespace yas --create-namespace \
---set ingress.host="api.$DOMAIN"
+--set ingress.host="api.$DOMAIN" \
+--set apiDocsBaseUrl="http://api.$DOMAIN"
+
+kubectl apply -f ./yas-ingress-gce.yaml
 
 sleep 20
 
