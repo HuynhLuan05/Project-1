@@ -118,6 +118,7 @@ NodePort numbers come from `k8s/deploy/README_YAS.md`. If Member 1 changed them,
 ## Notes / gotchas
 
 - **`delivery` service is excluded.** As of writing it has no Helm chart in `k8s/charts/` and no CI workflow producing a Docker Hub image, so there is nothing for `developer_build` to deploy. Add the entry to the `SERVICES` map in `developer_build/Jenkinsfile` once the chart lands.
+- **`payment-paypal` is excluded.** The `payment-paypal` Maven module is a library embedded in `payment` (PayPal `/init` and `/capture` live on the `payment` service). The published `ghcr.io/.../yas-payment-paypal` image is a plain JAR without a Spring Boot main class (`no main manifest attribute`), so deploying the standalone chart always crashes. Re-enable once the module ships a runnable Boot application.
 - **`swagger-ui` is intentionally not parameterised** — its chart pulls the upstream `swaggerapi/swagger-ui` image, not a YAS-built one. Re-running `deploy-yas-applications.sh` once initially gets it standing; afterwards `helm upgrade` on the YAS services leaves it alone.
 - **UI charts use `--set ui.image.*`**, not `backend.image.*`. The Jenkinsfile registry encodes this per-service.
 - **No GitHub webhook**: Req. 6 (auto-deploy `main`/`v*.*.*`) is owned by Member 4 via ArgoCD (`k8s/argocd/{dev,staging}-app.yaml`). Adding a webhook here would double-deploy.

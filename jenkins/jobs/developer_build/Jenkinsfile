@@ -27,7 +27,6 @@ def SERVICES = [
   'media'          : ['backend', 'yas-media'],
   'order'          : ['backend', 'yas-order'],
   'payment'        : ['backend', 'yas-payment'],
-  'payment-paypal' : ['backend', 'yas-payment-paypal'],
   'product'        : ['backend', 'yas-product'],
   'promotion'      : ['backend', 'yas-promotion'],
   'rating'         : ['backend', 'yas-rating'],
@@ -140,7 +139,7 @@ pipeline {
             def order = [
               'backoffice-bff', 'storefront-bff', 'backoffice-ui', 'storefront-ui',
               'customer', 'product', 'media', 'inventory', 'location',
-              'cart', 'order', 'payment', 'payment-paypal',
+              'cart', 'order', 'payment',
               'promotion', 'rating', 'recommendation',
               'search', 'tax', 'webhook', 'sampledata',
             ]
