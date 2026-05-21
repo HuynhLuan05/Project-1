@@ -1,4 +1,4 @@
-FROM jenkins/inbound-agent:latest-bookworm
+FROM --platform=linux/amd64 jenkins/inbound-agent:latest-jdk21
 
 USER root
 
@@ -24,3 +24,5 @@ RUN apt-get update \
  && yq --version
 
 USER jenkins
+
+

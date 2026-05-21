@@ -12,9 +12,6 @@ controller:
   serviceType: LoadBalancer
   servicePort: 8080
 
-  # Keep requests modest so the pod can schedule onto existing Autopilot nodes
-  # (GCE quota in this project is tight — new-node scale-ups have been failing).
-  # Limits stay higher so the JVM can burst during plugin init.
   resources:
     requests:
       cpu: "500m"
@@ -23,11 +20,8 @@ controller:
       cpu: "1500m"
       memory: "2Gi"
 
-  # Sized for the 2Gi memory limit. Skip the setup wizard so JCasC takes over.
   javaOpts: "-XX:MaxRAMPercentage=60.0 -Djenkins.install.runSetupWizard=false"
 
-  # Autopilot first-boot is slow: PVC provision + plugin init + JCasC parse.
-  # The chart's default startup probe gives ~5 min; give it 15 instead.
   probes:
     startupProbe:
       httpGet:
@@ -44,8 +38,6 @@ controller:
       periodSeconds: 10
       timeoutSeconds: 5
 
-  # SafeHTML markup formatter for currentBuild.description. The chart owns this
-  # key and writes it into JCasC — don't duplicate it in configScripts.
   markupFormatter: rawHtml
 
   installPlugins:
@@ -75,7 +67,7 @@ controller:
                   cpsScm {
                     scm {
                       git {
-                        remote { url('https://github.com/HuynhLuan05/Project-1.git') }
+                        remote { url('https://github.com/HuynhLuan05/YAS.git') }
                         branch('*/feat/jenkins-cd')
                       }
                     }
@@ -91,7 +83,7 @@ controller:
                   cpsScm {
                     scm {
                       git {
-                        remote { url('https://github.com/HuynhLuan05/Project-1.git') }
+                        remote { url('https://github.com/HuynhLuan05/YAS.git') }
                         branch('*/feat/jenkins-cd')
                       }
                     }
@@ -118,26 +110,29 @@ additionalAgents:
     podName: yas-deployer
     customJenkinsLabels:
       - yas-deployer
+    # GKE Autopilot node scale-ups regularly take 2–5 min. Default 100s timeout
+    slaveConnectTimeout: 600
+    connectTimeout: 600
+    idleMinutes: 0
     # Custom image with kubectl + helm + yq baked in (built from jenkins/agent.Dockerfile).
-    # Replace the registry/owner before `helm upgrade`.
     image:
       repository: docker.io/anhnguyen835/yas-jenkins-agent
-      tag: "1"
+      tag: "3"
     serviceAccount: yas-deployer
     resources:
       requests:
-        cpu: "500m"
-        memory: "2Gi"
+        cpu: "200m"
+        memory: "512Mi"
       limits:
-        cpu: "2"
-        memory: "2Gi"
+        cpu: "1"
+        memory: "1Gi"
 
 serviceAccount:
   create: true
   name: jenkins
 
 serviceAccountAgent:
-  # The chart-managed SA used by additionalAgents' fallback; the yasDeployer
-  # template overrides serviceAccount to `yas-deployer` (defined in rbac.yaml).
   create: true
   name: jenkins-agent
+
+

@@ -38,3 +38,5 @@ echo
 echo ">>> Done. Useful follow-up commands:"
 echo "    kubectl -n ${NAMESPACE} get svc ${RELEASE}      # LoadBalancer EXTERNAL-IP"
 echo "    kubectl -n ${NAMESPACE} exec -it ${RELEASE}-0 -c jenkins -- /bin/cat /run/secrets/additional/chart-admin-password"
+
+
