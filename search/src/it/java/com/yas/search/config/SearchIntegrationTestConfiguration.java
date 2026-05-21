@@ -1,10 +1,14 @@
 package com.yas.search.config;
 
+import com.yas.search.model.Product;
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.test.context.DynamicPropertyRegistrar;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -42,6 +46,16 @@ public class SearchIntegrationTestConfiguration {
     @ServiceConnection
     public ElasticTestContainer elasticTestContainer() {
         return new ElasticTestContainer(elasticSearchVersion);
+    }
+
+    @Bean
+    public ApplicationRunner createProductIndex(ElasticsearchOperations elasticsearchOperations) {
+        return args -> {
+            IndexOperations indexOperations = elasticsearchOperations.indexOps(Product.class);
+            if (!indexOperations.exists()) {
+                indexOperations.createWithMapping();
+            }
+        };
     }
 
     @Bean(destroyMethod = "stop")
