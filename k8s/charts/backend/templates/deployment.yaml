@@ -57,6 +57,8 @@ spec:
               value: {{ .Values.logbackXmlPath }}
             - name: SPRING_DATASOURCE_URL
               value: {{ .Values.databaseConnectionUrl }}/{{ .Values.databaseName }}?sslmode=require
+            - name: SPRINGDOC_API_DOCS_VERSION
+              value: {{ .Values.springdocApiDocsVersion | quote }}
             {{- if .Values.extraApplicationConfigPaths }}
             - name: SPRING_CONFIG_ADDITIONAL_LOCATION
               value: /opt/yas/config/application.yaml,{{ join "," .Values.extraApplicationConfigPaths }}

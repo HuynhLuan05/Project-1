@@ -103,7 +103,9 @@ Then open (port **80** — BFF/UI are `ClusterIP` + Ingress, not NodePort):
 | Backoffice  | `http://backoffice.yas.local.com/`           |
 | API / Swagger | `http://api.yas.local.com/swagger-ui/` (same GCE LB IP; specs at `http://api.yas.local.com/<service>/v3/api-docs`) |
 
-After deploy, run `helm upgrade swagger-ui` with `apiDocsBaseUrl=http://api.yas.local.com` (no `:30003`) and `kubectl apply -f k8s/deploy/yas-ingress-gce.yaml` so the GCE LB routes `/product`, `/media`, … and `/swagger-ui`. Open Swagger on **`api.yas.local.com`**, not the swagger Service’s separate LoadBalancer IP — otherwise the browser blocks cross-origin fetches (CORS).
+After deploy, run `kubectl apply -f k8s/deploy/yas-ingress-gce.yaml` and `k8s/deploy/apply-gce-backend-health.sh` so GCE health checks use management port **8090** (`/actuator/health/liveness`) instead of `/` on port 80 (which causes **502** on `/product/v3/api-docs`). Open Swagger at `http://api.yas.local.com/swagger-ui/` (same origin as OpenAPI specs).
+
+**Swagger “Unable to render… valid version field”:** Spring services emit OpenAPI **3.1** by default; standalone Swagger UI **v4** (often **cached** in the browser) only accepts **3.0.x**. Fix: chart `swagger-ui` image **v5.18.2+**, hard refresh / incognito, and backend `springdoc.api-docs.version=openapi_3_0` (via `SPRINGDOC_API_DOCS_VERSION` env in the backend chart) after pods roll out.
 
 Legacy NodePort docs (`30001`–`30003`) in `k8s/deploy/README_YAS.md` apply only when Member 1 exposes services as `NodePort`.
 

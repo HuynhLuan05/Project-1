@@ -1,5 +1,5 @@
 # GCE HTTP(S) load balancer for YAS (namespace yas).
-# List specific paths before "/" so storefront-ui does not capture API or Swagger traffic.
+# Host-based rules — match how the live cluster is configured.
 # Apply: kubectl apply -f k8s/deploy/yas-ingress-gce.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -11,7 +11,8 @@ metadata:
     kubernetes.io/ingress.allow-http: "true"
 spec:
   rules:
-    - http:
+    - host: api.yas.local.com
+      http:
         paths:
           - path: /swagger-ui
             pathType: Prefix
@@ -125,27 +126,19 @@ spec:
                 name: sampledata
                 port:
                   number: 80
-          - path: /admin
+    - host: backoffice.yas.local.com
+      http:
+        paths:
+          - path: /
             pathType: Prefix
             backend:
               service:
                 name: backoffice-ui
                 port:
                   number: 3000
-          - path: /storefront-api
-            pathType: Prefix
-            backend:
-              service:
-                name: storefront-bff
-                port:
-                  number: 80
-          - path: /backoffice-api
-            pathType: Prefix
-            backend:
-              service:
-                name: backoffice-bff
-                port:
-                  number: 80
+    - host: storefront.yas.local.com
+      http:
+        paths:
           - path: /
             pathType: Prefix
             backend:

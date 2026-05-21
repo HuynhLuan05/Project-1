@@ -37,6 +37,9 @@ helm upgrade --install swagger-ui ../charts/swagger-ui \
 
 kubectl apply -f ./yas-ingress-gce.yaml
 
+# GCE health checks: management port 8090 (see apply-gce-backend-health.sh)
+./apply-gce-backend-health.sh
+
 sleep 20
 
 for chart in {"cart","customer","inventory","location","media","order","payment","payment-paypal","product","promotion","rating","search","tax","recommendation","webhook","sampledata"} ; do

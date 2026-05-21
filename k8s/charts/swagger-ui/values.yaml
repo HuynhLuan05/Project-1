@@ -8,7 +8,8 @@ image:
   repository: swaggerapi/swagger-ui
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v4.16.0"
+  # v5+ supports OpenAPI 3.1; keep v5 even when APIs emit 3.0 for older browser caches.
+  tag: "v5.18.2"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -36,6 +37,7 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
+# Bump path segment after upgrading Swagger UI image so browsers skip cached v4 static files.
 baseUrl: /swagger-ui
 
 # Base URL for OpenAPI specs — must match how browsers reach the API (port 80, no NodePort).
