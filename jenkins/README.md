@@ -49,6 +49,12 @@ sed -i.bak "s|docker.io/REPLACE_ME/yas-jenkins-agent|docker.io/<YOUR_DOCKERHUB_U
 
 This runs `kubectl apply -f rbac.yaml` and then `helm upgrade --install jenkins jenkins/jenkins -n jenkins -f values.yaml`. JCasC seeds both pipeline jobs on first boot.
 
+After pulling chart changes that add GCE `BackendConfig`, re-apply RBAC once (Jenkins SA needs `cloud.google.com/backendconfigs`):
+
+```bash
+kubectl apply -f jenkins/rbac.yaml
+```
+
 When the LoadBalancer gets an external IP:
 
 ```bash

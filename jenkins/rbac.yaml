@@ -54,6 +54,11 @@ rules:
       - podmonitors
       - prometheusrules
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # GKE BackendConfig (backend chart health checks for yas-ingress / GCE LB).
+  - apiGroups: ["cloud.google.com"]
+    resources:
+      - backendconfigs
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
