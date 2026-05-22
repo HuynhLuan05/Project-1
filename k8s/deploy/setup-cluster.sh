@@ -1,9 +1,10 @@
 #!/bin/bash
 set -x
 
+STRIMZI_OPERATOR_VERSION=0.45.2
+
 # Add chart repos and update
 helm repo add postgres-operator-charts https://opensource.zalando.com/postgres-operator/charts/postgres-operator
-helm repo add strimzi https://strimzi.io/charts/
 helm repo add akhq https://akhq.io/
 helm repo add elastic https://helm.elastic.co
 helm repo add grafana https://grafana.github.io/helm-charts
@@ -37,8 +38,12 @@ helm upgrade --install pgadmin ./postgres/pgadmin \
 --create-namespace --namespace postgres \
 
 #Install strimzi-kafka-operator
-helm upgrade --install kafka-operator strimzi/strimzi-kafka-operator \
---create-namespace --namespace kafka --version 0.45.0
+# Reset values during upgrades so older STRIMZI_KAFKA_IMAGES mappings do not survive
+# into a newer operator release and crash the cluster operator on startup.
+helm upgrade --install kafka-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator \
+--create-namespace --namespace kafka \
+--version "$STRIMZI_OPERATOR_VERSION" \
+--reset-values
 
 #Install kafka and postgresql connector
 helm upgrade --install kafka-cluster ./kafka/kafka-cluster \

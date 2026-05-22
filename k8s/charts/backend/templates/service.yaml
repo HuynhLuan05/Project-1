@@ -4,6 +4,17 @@ metadata:
   name: {{ include "backend.fullname" . }}
   labels:
     {{- include "backend.labels" . | nindent 4 }}
+  {{- $annotations := dict }}
+  {{- with .Values.service.annotations }}
+  {{- $annotations = merge $annotations . }}
+  {{- end }}
+  {{- if .Values.gceBackendConfig.enabled }}
+  {{- $_ := set $annotations "cloud.google.com/backend-config" (printf "{\"default\": %q}" (default (include "backend.fullname" .) .Values.gceBackendConfig.name)) }}
+  {{- end }}
+  {{- if $annotations }}
+  annotations:
+    {{- toYaml $annotations | nindent 4 }}
+  {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:

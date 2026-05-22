@@ -19,7 +19,7 @@ spec:
   template:
     metadata:
       annotations:
-        traffic.sidecar.istio.io/excludeOutboundPorts: "5432"
+        traffic.sidecar.istio.io/excludeOutboundPorts: {{ .Values.excludeOutboundPorts | quote }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -56,7 +56,7 @@ spec:
             - name: LOGGING_CONFIG
               value: {{ .Values.logbackXmlPath }}
             - name: SPRING_DATASOURCE_URL
-              value: {{ .Values.databaseConnectionUrl }}/{{ .Values.databaseName }}?sslmode=disable
+              value: {{ .Values.databaseConnectionUrl }}/{{ .Values.databaseName }}?sslmode={{ .Values.databaseSslMode }}
             {{- if .Values.extraApplicationConfigPaths }}
             - name: SPRING_CONFIG_ADDITIONAL_LOCATION
               value: /opt/yas/config/application.yaml,{{ join "," .Values.extraApplicationConfigPaths }}
