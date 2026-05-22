@@ -60,8 +60,3 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
-
-{{/* Swagger UI URLS env (OpenAPI spec endpoints) — must share origin with the Swagger page (no NodePort). */}}
-{{- define "swagger-ui.urls" -}}
-[{{- range $i, $e := .Values.apiDocsServices }}{{- if $i }}, {{ end }}{ url: '{{ $.Values.apiDocsBaseUrl }}/{{ $e.path }}/v3/api-docs', name: '{{ $e.name }}' }{{- end }}]
-{{- end }}

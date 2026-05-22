@@ -5,9 +5,6 @@ set -x
 helm repo add stakater https://stakater.github.io/stakater-charts
 helm repo update
 
-# Alias postgres:5432 in `yas` -> postgresql.postgres (Zalando operator)
-kubectl apply -f ./yas-postgres-service.yaml
-
 helm dependency build ../charts/yas-configuration
 helm upgrade --install yas-configuration ../charts/yas-configuration \
 --namespace yas --create-namespace \
