@@ -1,4 +1,5 @@
 kafka:
+  version: 3.9.1
   replicas: 1
   storeSize: 10Gi
 zookeeper:

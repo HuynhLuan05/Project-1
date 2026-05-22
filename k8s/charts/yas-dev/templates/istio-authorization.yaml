@@ -49,7 +49,3 @@ spec:
   - from:
     - source:
         namespaces: ["ingress-nginx", "istio-system", "default"]
-
-
-
-

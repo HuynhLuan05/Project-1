@@ -6,6 +6,7 @@ backend:
   nameOverride: search
   fullnameOverride: search
   databaseName: search
+  excludeOutboundPorts: "5432,9200"
   ingress:
     enabled: false
   extraEnvFroms:
@@ -20,3 +21,12 @@ backend:
       mountPath: /opt/yas/search
   extraApplicationConfigPaths:
     - /opt/yas/search/search-application.yaml
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+      ephemeral-storage: 256Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+      ephemeral-storage: 512Mi

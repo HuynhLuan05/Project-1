@@ -19,10 +19,13 @@ kubectl apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resourc
 # Install keycloak
 helm upgrade --install keycloak ./keycloak/keycloak \
 --namespace keycloak \
---set hostname="keycloak-service.keycloak.svc.cluster.local" \
+--set hostname="identity.$DOMAIN" \
 --set postgresql.username="$POSTGRESQL_USERNAME" \
 --set postgresql.password="$POSTGRESQL_PASSWORD" \
 --set bootstrapAdmin.username="$BOOTSTRAP_ADMIN_USERNAME" \
 --set bootstrapAdmin.password="$BOOTSTRAP_ADMIN_PASSWORD" \
 --set backofficeRedirectUrl="$KEYCLOAK_BACKOFFICE_REDIRECT_URL" \
 --set storefrontRedirectUrl="$KEYCLOAK_STOREFRONT_REDIRECT_URL"
+
+kubectl apply -f ./keycloak-service-gce.yaml
+kubectl apply -f ./keycloak-ingress.yaml

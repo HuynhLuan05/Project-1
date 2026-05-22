@@ -118,27 +118,46 @@ const ProductDetailsPage = ({ product, productOptions, productVariations, pvid }
   const [productOptionValueGet, setProductOptionValueGet] = useState<ProductOptionValueDisplay[]>(
     []
   );
+  const [isRatingAvailable, setIsRatingAvailable] = useState<boolean>(true);
 
   useEffect(() => {
     getAverageStarByProductId(product.id)
       .then((res) => {
         setAverageStar(res);
+        setIsRatingAvailable(true);
       })
       .catch((error) => {
         console.error('Error fetching average star:', error);
+        setAverageStar(0);
+        setIsRatingAvailable(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    getRatingsByProductId(product.id, pageNo, pageSize).then((res) => {
-      setRatingList(res.ratingList);
-      setTotalPages(res.totalPages);
-      setTotalElements(res.totalElements);
-    });
-    getProductOptionValueByProductId(product.id).then((res) => {
-      setProductOptionValueGet(res);
-    });
+    getRatingsByProductId(product.id, pageNo, pageSize)
+      .then((res) => {
+        setRatingList(res.ratingList);
+        setTotalPages(res.totalPages);
+        setTotalElements(res.totalElements);
+        setIsRatingAvailable(true);
+      })
+      .catch((error) => {
+        console.error('Error fetching ratings:', error);
+        setRatingList([]);
+        setTotalPages(0);
+        setTotalElements(0);
+        setIsRatingAvailable(false);
+      });
+
+    getProductOptionValueByProductId(product.id)
+      .then((res) => {
+        setProductOptionValueGet(res);
+      })
+      .catch((error) => {
+        console.error('Error fetching product option values:', error);
+        setProductOptionValueGet([]);
+      });
   }, [pageNo, pageSize, product.id, isPost]);
 
   const handlePageChange = ({ selected }: any) => {
@@ -244,29 +263,35 @@ const ProductDetailsPage = ({ product, productOptions, productVariations, pvid }
         </Tab>
         <Tab eventKey="Reviews" title={`Reviews (${totalElements})`} style={{ minHeight: '200px' }}>
           <div>
-            <div
-              style={{
-                borderBottom: '1px solid lightgray',
-                marginBottom: 30,
-              }}
-            >
-              <PostRatingForm
-                ratingStar={ratingStar}
-                handleChangeRating={handleChangeRating}
-                contentRating={contentRating}
-                setContentRating={setContentRating}
-                handleCreateRating={handleCreateRating}
-              />
-            </div>
-            <div>
-              <RatingList
-                ratingList={ratingList ? ratingList : null}
-                pageNo={pageNo}
-                totalElements={totalElements}
-                totalPages={totalPages}
-                handlePageChange={handlePageChange}
-              />
-            </div>
+            {!isRatingAvailable ? (
+              <p>Reviews are temporarily unavailable.</p>
+            ) : (
+              <>
+                <div
+                  style={{
+                    borderBottom: '1px solid lightgray',
+                    marginBottom: 30,
+                  }}
+                >
+                  <PostRatingForm
+                    ratingStar={ratingStar}
+                    handleChangeRating={handleChangeRating}
+                    contentRating={contentRating}
+                    setContentRating={setContentRating}
+                    handleCreateRating={handleCreateRating}
+                  />
+                </div>
+                <div>
+                  <RatingList
+                    ratingList={ratingList ? ratingList : null}
+                    pageNo={pageNo}
+                    totalElements={totalElements}
+                    totalPages={totalPages}
+                    handlePageChange={handlePageChange}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </Tab>
       </Tabs>
