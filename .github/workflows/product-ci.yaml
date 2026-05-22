@@ -3,6 +3,7 @@ name: product service ci
 on:
     # Trigger the workflow on push or pull request events to the main branch, but only for changes in the product directory, workflow files, or pom.xml
     push:
+        branches: [ "main" ]
         paths:
             - "product/**"
             - ".github/workflows/actions/action.yaml"

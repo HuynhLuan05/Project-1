@@ -2,6 +2,7 @@ name: location service ci
 
 on:
   push:
+    branches: [ "main" ]
     paths:
       - "location/**"
       - ".github/workflows/actions/action.yaml"
