@@ -3,6 +3,9 @@ name: product service ci
 on:
     # Trigger the workflow on push or pull request events to the main branch, but only for changes in the product directory, workflow files, or pom.xml
     push:
+        branches: [ "main" ]
+        tags:
+          - "v*.*.*"
         paths:
             - "product/**"
             - ".github/workflows/actions/action.yaml"
@@ -91,6 +94,13 @@ jobs:
                   context: ./product
                   push: true
                   tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/yas-product:${{ github.sha }}
+            - name: Build and push release image
+              if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+              uses: docker/build-push-action@v6
+              with:
+                  context: ./product
+                  push: true
+                  tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/yas-product:${{ github.ref_name }}
             - name: Build and push latest image
               if: ${{ github.ref == 'refs/heads/main' }}
               uses: docker/build-push-action@v6

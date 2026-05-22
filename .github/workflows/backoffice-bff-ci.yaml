@@ -2,6 +2,9 @@ name: backoffice-bff service ci
 
 on:
   push:
+    branches: [ "main" ]
+    tags:
+      - "v*.*.*"
     paths:
       - "backoffice-bff/**"
       - ".github/workflows/actions/action.yaml"
@@ -71,6 +74,13 @@ jobs:
           context: ./backoffice-bff
           push: true
           tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/yas-backoffice-bff:${{ github.sha }}
+      - name: Build and push release image
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backoffice-bff
+          push: true
+          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/yas-backoffice-bff:${{ github.ref_name }}
       - name: Build and push latest image
         if: ${{ github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v6
