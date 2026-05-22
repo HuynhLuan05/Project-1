@@ -103,10 +103,20 @@ pipeline {
     }
 
     stage('Helm dependency build') {
+      // Force a fresh repackage of subcharts every build. We purge any cached
+      // .tgz under <chart>/charts/ and the Chart.lock pin, so `helm dependency
+      // build` re-packages from the current source (file://../<subchart>).
+      // Without this, a stale backend-0.1.0.tgz survives in the repo and the
+      // pipeline silently deploys an old subchart version even though the
+      // source has been updated (e.g. sslmode parametrized, postgres FQDN).
       steps {
         script {
           SERVICES.keySet().each { svc ->
-            sh "helm dependency build ${CHARTS_DIR}/${svc} || true"
+            sh """
+              rm -rf ${CHARTS_DIR}/${svc}/charts
+              rm -f  ${CHARTS_DIR}/${svc}/Chart.lock
+              helm dependency build ${CHARTS_DIR}/${svc} || true
+            """
           }
         }
       }
