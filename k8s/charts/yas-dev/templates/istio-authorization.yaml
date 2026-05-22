@@ -19,6 +19,8 @@ spec:
         principals:
           - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
           - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+          - "cluster.local/ns/{{ .Release.Namespace }}/sa/order"
+          - "cluster.local/ns/{{ .Release.Namespace }}/sa/search"
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
