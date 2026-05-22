@@ -29,5 +29,26 @@ dependencies:
 - name: backoffice-ui
   repository: file://../backoffice-ui
   version: 0.1.0
-digest: sha256:163de0728586919332e73d92bbec2c0d4d027277b423af1e1c7b82aff2a0c112
-generated: "2026-04-18T19:45:50.728825488+07:00"
+- name: cart
+  repository: file://../cart
+  version: 0.2.0
+- name: order
+  repository: file://../order
+  version: 0.2.0
+- name: customer
+  repository: file://../customer
+  version: 0.1.0
+- name: inventory
+  repository: file://../inventory
+  version: 0.1.0
+- name: tax
+  repository: file://../tax
+  version: 0.1.0
+- name: search
+  repository: file://../search
+  version: 0.1.0
+- name: swagger-ui
+  repository: file://../swagger-ui
+  version: 0.1.0
+digest: sha256:84e119ffbd652ac8b0875ec6b3663b541c22a98dcb305b55f6cbd701a4f5fa7d
+generated: "2026-05-15T19:07:39.016338623+07:00"

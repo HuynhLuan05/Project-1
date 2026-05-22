@@ -41,3 +41,38 @@ spec:
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: identity-no-mtls
+  namespace: {{ $namespace }}
+spec:
+  host: identity
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: postgres-no-mtls
+  namespace: {{ $namespace }}
+spec:
+  host: postgres
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+# Cho phép cả HTTP lẫn mTLS vào Keycloak
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: identity-permissive
+  namespace: {{ $namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: keycloak
+  mtls:
+    mode: PERMISSIVE
