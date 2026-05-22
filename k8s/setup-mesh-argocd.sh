@@ -13,22 +13,45 @@ echo "Đợi ArgoCD server khởi động..."
 kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s
 
 echo "Bắt đầu cài đặt Istio..."
-# Cài đặt qua Helm
+
+# Thêm Istio Helm repository
 helm repo add istio https://istio-release.storage.googleapis.com/charts
 helm repo update
 
 # Cài Istio Base (CRDs)
 kubectl create namespace istio-system || true
-helm install istio-base istio/base -n istio-system --set defaultRevision=default || helm upgrade istio-base istio/base -n istio-system
+helm install istio-base istio/base -n istio-system --set defaultRevision=default \
+  || helm upgrade istio-base istio/base -n istio-system
 
-# Cài Istiod (Control Plane)
-helm install istiod istio/istiod -n istio-system --wait || helm upgrade istiod istio/istiod -n istio-system --wait
+# Cài Istiod (Control Plane) với tài nguyên thấp
+helm install istiod istio/istiod -n istio-system --wait \
+  --set pilot.resources.requests.cpu=50m \
+  --set pilot.resources.requests.memory=128Mi \
+  --set global.proxy.resources.requests.cpu=10m \
+  --set global.proxy.resources.requests.memory=64Mi \
+  || helm upgrade istiod istio/istiod -n istio-system --wait \
+  --set pilot.resources.requests.cpu=50m \
+  --set pilot.resources.requests.memory=128Mi \
+  --set global.proxy.resources.requests.cpu=10m \
+  --set global.proxy.resources.requests.memory=64Mi
 
-# (Tùy chọn) Cài Kiali để quan sát
-echo "Bắt đầu cài đặt Kiali Dashboard..."
+echo "Bắt đầu cài đặt Kiali..."
+
+# Thêm Kiali Helm repository
 helm repo add kiali https://kiali.org/helm-charts
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/prometheus.yaml # Cần prometheus cho Kiali
-helm install kiali-server kiali/kiali-server -n istio-system --set service.type=NodePort || helm upgrade kiali-server kiali/kiali-server -n istio-system
+
+# Cài đặt Prometheus (Cần cho Kiali)
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/prometheus.yaml
+
+# Cài đặt Kiali server với tài nguyên thấp
+helm install kiali-server kiali/kiali-server -n istio-system \
+  --set service.type=NodePort \
+  --set deployment.resources.requests.cpu=50m \
+  --set deployment.resources.requests.memory=64Mi \
+  || helm upgrade kiali-server kiali/kiali-server -n istio-system \
+  --set service.type=NodePort \
+  --set deployment.resources.requests.cpu=50m \
+  --set deployment.resources.requests.memory=64Mi
 
 echo "============================================================"
 echo "Cài đặt hoàn tất"

@@ -16,9 +16,9 @@ spec:
   rules:
   - from:
     - source:
-        principals: 
-        - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
-        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+        principals:
+          - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
+          - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -49,4 +49,5 @@ spec:
   - from:
     - source:
         namespaces: ["ingress-nginx", "istio-system", "default"]
+
 
