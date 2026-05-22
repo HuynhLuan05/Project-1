@@ -19,6 +19,7 @@ pipeline {
 
   options {
     timeout(time: 20, unit: 'MINUTES')
+    disableConcurrentBuilds()
   }
 
   environment {
@@ -28,7 +29,7 @@ pipeline {
   stages {
     stage('List existing releases') {
       steps {
-        sh "helm list -n ${NAMESPACE}"
+        sh "helm list -a -n ${NAMESPACE}"
       }
     }
 
@@ -36,13 +37,24 @@ pipeline {
       steps {
         sh '''
           set -euo pipefail
-          releases=$(helm list -n "$NAMESPACE" -q || true)
+          releases=$(helm list -a -n "$NAMESPACE" -q || true)
           if [ -z "$releases" ]; then
             echo "No releases in namespace $NAMESPACE — nothing to do."
             exit 0
           fi
           echo "Uninstalling: $releases"
-          echo "$releases" | xargs -r -n1 helm uninstall -n "$NAMESPACE"
+          failed=""
+          for r in $releases; do
+            if ! helm uninstall "$r" -n "$NAMESPACE"; then
+              echo ">>> retry $r with --no-hooks"
+              if ! helm uninstall "$r" -n "$NAMESPACE" --no-hooks --ignore-not-found; then
+                failed="$failed $r"
+              fi
+            fi
+          done
+          if [ -n "$failed" ]; then
+            echo "WARNING: these releases could not be fully uninstalled:$failed"
+          fi
         '''
       }
     }
@@ -57,20 +69,18 @@ pipeline {
       }
     }
 
-    stage('Verify') {
-      steps {
-        sh '''
-          echo "Remaining releases:"
-          helm list -n "$NAMESPACE"
-          echo
-          echo "Remaining pods (should drain shortly):"
-          kubectl -n "$NAMESPACE" get pods || true
-        '''
-      }
-    }
   }
 
   post {
+    always {
+      sh '''
+        echo "Remaining releases:"
+        helm list -a -n "$NAMESPACE" || true
+        echo
+        echo "Remaining pods (should drain shortly):"
+        kubectl -n "$NAMESPACE" get pods || true
+      '''
+    }
     success { echo "Teardown complete in namespace ${env.NAMESPACE}." }
     failure { echo "Teardown failed — check logs." }
   }
