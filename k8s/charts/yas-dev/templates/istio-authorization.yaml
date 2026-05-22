@@ -49,9 +49,6 @@ spec:
   - from:
     - source:
         namespaces: ["ingress-nginx", "istio-system", "default"]
-<<<<<<< HEAD
-=======
 
->>>>>>> fix/argoCD-Service-Mesh
 
 
