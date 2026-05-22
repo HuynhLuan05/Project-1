@@ -26,6 +26,9 @@ export async function getDetailedCartItems(): Promise<CartItemGetDetailsVm[]> {
 
 async function getCartItems(): Promise<CartItemGetVm[]> {
   const response = await apiClientService.get(CART_BASE_URL);
+  if (response.status === 401 || response.status === 403) {
+    return [];
+  }
   if (!response.ok) {
     await throwDetailedError(response);
   }
@@ -58,6 +61,9 @@ function mapCartItemsToDetailedItems(
 
 export async function getNumberCartItems(): Promise<number> {
   const response = await apiClientService.get(CART_BASE_URL);
+  if (response.status === 401 || response.status === 403) {
+    return 0;
+  }
   if (!response.ok) {
     await throwDetailedError(response);
   }

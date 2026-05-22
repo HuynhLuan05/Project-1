@@ -14,7 +14,10 @@ grafana:
   adminUser: admin
   adminPassword: admin
   ingress:
-    ingressClassName: nginx
+    ingressClassName: gce
     enabled: true
+    annotations:
+      kubernetes.io/ingress.class: "gce"
+      kubernetes.io/ingress.allow-http: "true"
     hosts:
       - *hostname
