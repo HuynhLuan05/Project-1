@@ -1,31 +1,31 @@
-# Main values file for yas-dev umbrella chart.
+# Main values file for yas-staging umbrella chart.
 
 # ── BFF Services ──
 storefront-bff:
   backend:
-    fullnameOverride: storefront-bff
+    fullnameOverride: storefront-bff-staging
     serviceAccount:
       create: true
     image:
-      tag: latest        
+      tag: "v1.0.0"        
 backoffice-bff:
   backend:
-    fullnameOverride: backoffice-bff
+    fullnameOverride: backoffice-bff-staging
     serviceAccount:
       create: true
     image:
-      tag: latest       
+      tag: "v1.0.0"        
 
 # ── UI Services ──
 storefront-ui:
   ui:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 backoffice-ui:
   ui:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 # ── API Documentation ──
 swagger-ui:
@@ -36,64 +36,74 @@ swagger-ui:
 product:
   backend:
     image:
-      tag: latest        
+      tag: "v1.0.0"        
 
 media:
   backend:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 cart:
   backend:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 order:
   backend:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 customer:
   backend:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 inventory:
   backend:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 location:
   backend:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 payment:
   backend:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 promotion:
   backend:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 rating:
   backend:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 search:
   backend:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 tax:
   backend:
     image:
-      tag: latest
+      tag: "v1.0.0"
 
 webhook:
   backend:
     image:
-      tag: latest
+      tag: "v1.0.0"
+
+# ── Infrastructure overrides for Staging (Avoid NodePort conflicts with Dev) ──
+database:
+  service:
+    nodePort: 30107
+
+jaeger:
+  service:
+    otlpGrpcNodePort: 30117
+    otlpHttpNodePort: 30118
