@@ -1,6 +1,6 @@
 backend:
   image:
-    repository: ghcr.io/nashtech-garage/yas-customer
+    repository: ntanh23/yas-customer
     tag: latest
 
   nameOverride: customer

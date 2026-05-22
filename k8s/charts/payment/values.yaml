@@ -1,6 +1,6 @@
 backend:
   image:
-    repository: ghcr.io/nashtech-garage/yas-payment
+    repository: ntanh23/yas-payment
     tag: latest
 
   nameOverride: payment

@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/HuynhLuan05/YAS.git'
-    targetRevision: fix/argoCD-Service-Mesh
+    targetRevision: 'v1.0.0'
     path: k8s/charts/yas-dev
     helm:
       valueFiles:
