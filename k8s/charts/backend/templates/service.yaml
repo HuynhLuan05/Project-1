@@ -4,10 +4,6 @@ metadata:
   name: {{ include "backend.fullname" . }}
   labels:
     {{- include "backend.labels" . | nindent 4 }}
-  {{- if .Values.backendConfig.enabled }}
-  annotations:
-    cloud.google.com/backend-config: '{"default": "{{ include "backend.fullname" . }}"}'
-  {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:
