@@ -8,6 +8,13 @@ data:
     server {
       listen 80;
       server_name _;
+      resolver 34.118.224.10 valid=30s ipv6=off;
+
+      set $rating_upstream http://rating.yas.svc.cluster.local:80;
+      set $promotion_upstream http://promotion.yas.svc.cluster.local:80;
+      set $webhook_upstream http://webhook.yas.svc.cluster.local:80;
+      set $sampledata_upstream http://sampledata.yas.svc.cluster.local:80;
+      set $recommendation_upstream http://recommendation.yas.svc.cluster.local:80;
 
       location = /healthz {
         access_log off;
@@ -48,6 +55,26 @@ data:
         proxy_pass http://cart.yas.svc.cluster.local:80;
       }
 
+      location ~ ^/rating/storefront/ratings/product/[0-9]+/average-star$ {
+        proxy_intercept_errors on;
+        error_page 502 503 504 = @rating_average_fallback;
+        proxy_pass $rating_upstream;
+      }
+
+      location ~ ^/rating/storefront/ratings/products/[0-9]+$ {
+        proxy_intercept_errors on;
+        error_page 502 503 504 = @rating_list_fallback;
+        proxy_pass $rating_upstream;
+      }
+
+      location /rating/ {
+        proxy_pass $rating_upstream;
+      }
+
+      location /location/ {
+        proxy_pass http://location.yas.svc.cluster.local:80;
+      }
+
       location /inventory/ {
         proxy_pass http://inventory.yas.svc.cluster.local:80;
       }
@@ -56,12 +83,56 @@ data:
         proxy_pass http://order.yas.svc.cluster.local:80;
       }
 
+      location /payment/ {
+        proxy_pass http://payment.yas.svc.cluster.local:80;
+      }
+
+      location /promotion/ {
+        proxy_pass $promotion_upstream;
+      }
+
       location /search/ {
         proxy_pass http://search.yas.svc.cluster.local:80;
       }
 
+      location /webhook/ {
+        proxy_pass $webhook_upstream;
+      }
+
+      location /sampledata/ {
+        proxy_pass $sampledata_upstream;
+      }
+
+      location ~ ^/recommendation/embedding/product/[0-9]+/similarity$ {
+        proxy_intercept_errors on;
+        error_page 502 503 504 = @recommendation_similarity_fallback;
+        proxy_pass $recommendation_upstream;
+      }
+
+      location /recommendation/ {
+        proxy_pass $recommendation_upstream;
+      }
+
       location /tax/ {
         proxy_pass http://tax.yas.svc.cluster.local:80;
+      }
+
+      location @rating_average_fallback {
+        default_type application/json;
+        add_header Cache-Control no-store;
+        return 200 '0';
+      }
+
+      location @rating_list_fallback {
+        default_type application/json;
+        add_header Cache-Control no-store;
+        return 200 '{"ratingList":[],"totalPages":0,"totalElements":0}';
+      }
+
+      location @recommendation_similarity_fallback {
+        default_type application/json;
+        add_header Cache-Control no-store;
+        return 200 '[]';
       }
     }
 ---

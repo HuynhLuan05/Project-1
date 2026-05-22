@@ -7,6 +7,10 @@ backend:
   fullnameOverride: storefront-bff
   serviceAccount:
     create: true
+  hostAliases:
+    - ip: 8.233.208.49
+      hostnames:
+        - identity.yas.local.com
   service:
     annotations:
       cloud.google.com/neg: '{"ingress":true}'
@@ -27,6 +31,8 @@ backend:
       value: http://api-gateway-nodeport
     - name: SPRING_PROFILES_ACTIVE
       value: prod
+    - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI
+      value: http://identity.yas.local.com/realms/Yas
     - name: UI_HOST
       value: http://storefront-ui:3000
   extraEnvFroms:

@@ -25,6 +25,11 @@ serviceAccount:
 
 podAnnotations: {}
 
+hostAliases: []
+#  - ip: 34.118.226.89
+#    hostnames:
+#      - identity.yas.local.com
+
 podSecurityContext: {}
   # fsGroup: 2000
 
