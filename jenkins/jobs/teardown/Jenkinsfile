@@ -1,0 +1,134 @@
+properties([
+  parameters([
+    string(
+      name: 'KEEP_RELEASES',
+      defaultValue: 'yas-configuration',
+      description: 'Space-separated Helm release names in the yas namespace to PRESERVE. Default protects yas-configuration (member 1\'s shared ConfigMaps/Secrets). Add more here if Member 1 introduces other infra-level charts.'
+    ),
+    booleanParam(
+      name: 'CLEAN_PVC',
+      defaultValue: false,
+      description: 'Also delete all PersistentVolumeClaims in the yas namespace (DESTROYS Postgres/Kafka data).'
+    )
+  ]),
+  buildDiscarder(logRotator(numToKeepStr: '20'))
+])
+
+pipeline {
+  agent { label 'yas-deployer' }
+
+  options {
+    timeout(time: 60, unit: 'MINUTES')
+    disableConcurrentBuilds()
+  }
+
+  environment {
+    NAMESPACE = 'yas'
+  }
+
+  stages {
+    stage('List existing releases') {
+      steps {
+        sh "helm list -a -n ${NAMESPACE}"
+        echo "KEEP_RELEASES = ${params.KEEP_RELEASES}"
+      }
+    }
+
+    stage('Preflight: unstick pending/uninstalling releases') {
+      // A previous teardown that was timed out / aborted leaves releases in
+      // states like pending-upgrade / pending-install / uninstalling. Those
+      // states block every subsequent helm operation on the same release. We
+      // delete the Helm storage Secret(s) so the release becomes invisible
+      // to helm; this stage's job then takes over.
+      steps {
+        sh '''
+          set -euo pipefail
+          stuck=$(helm list -a -n "$NAMESPACE" --no-headers \
+                  --filter 'pending|uninstalling' -q || true)
+          if [ -z "$stuck" ]; then
+            echo "No stuck releases."
+            exit 0
+          fi
+          for r in $stuck; do
+            echo "Force-clearing stuck release: $r"
+            kubectl -n "$NAMESPACE" delete secret \
+              -l "owner=helm,name=$r" --ignore-not-found
+          done
+        '''
+      }
+    }
+
+    stage('helm uninstall app releases') {
+      steps {
+        sh '''
+          set -euo pipefail
+          all=$(helm list -a -n "$NAMESPACE" -q || true)
+          if [ -z "$all" ]; then
+            echo "No releases in namespace $NAMESPACE — nothing to do."
+            exit 0
+          fi
+
+          # Build the target list: all releases minus KEEP_RELEASES.
+          targets=""
+          for r in $all; do
+            keep=0
+            for k in $KEEP_RELEASES; do
+              if [ "$r" = "$k" ]; then keep=1; break; fi
+            done
+            if [ "$keep" = "1" ]; then
+              echo "PRESERVE: $r (in KEEP_RELEASES)"
+            else
+              targets="$targets $r"
+            fi
+          done
+
+          if [ -z "$targets" ]; then
+            echo "Nothing to uninstall after applying KEEP_RELEASES."
+            exit 0
+          fi
+
+          echo "Uninstalling:$targets"
+          failed=""
+          for r in $targets; do
+            if ! helm uninstall "$r" -n "$NAMESPACE" --timeout 25m; then
+              echo ">>> retry $r with --no-hooks"
+              if ! helm uninstall "$r" -n "$NAMESPACE" --no-hooks --ignore-not-found --timeout 25m; then
+                failed="$failed $r"
+              fi
+            fi
+          done
+          if [ -n "$failed" ]; then
+            echo "WARNING: these releases could not be fully uninstalled:$failed"
+          fi
+        '''
+      }
+    }
+
+    stage('Optional: delete PVCs') {
+      when { expression { return params.CLEAN_PVC } }
+      steps {
+        sh '''
+          echo "CLEAN_PVC=true — deleting all PVCs in $NAMESPACE"
+          kubectl -n "$NAMESPACE" delete pvc --all --wait=true || true
+        '''
+      }
+    }
+
+  }
+
+  post {
+    always {
+      sh '''
+        echo "Remaining releases:"
+        helm list -a -n "$NAMESPACE" || true
+        echo
+        echo "Remaining pods (should drain shortly):"
+        kubectl -n "$NAMESPACE" get pods || true
+      '''
+    }
+    success { echo "Teardown complete in namespace ${env.NAMESPACE}." }
+    failure { echo "Teardown failed — check logs." }
+  }
+}
+
+
