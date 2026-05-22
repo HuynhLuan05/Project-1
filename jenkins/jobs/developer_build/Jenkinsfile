@@ -1,3 +1,7 @@
+// Removed from scope (not deployed by this pipeline):
+//   payment, payment-paypal, promotion, rating, recommendation, webhook, location
+// Reason: out of scope for current sprint. If they need to come back, add them
+// here AND in the deploy `order` list below.
 def SERVICES = [
   'backoffice-bff' : ['backend', 'yas-backoffice-bff'],
   'storefront-bff' : ['backend', 'yas-storefront-bff'],
@@ -6,17 +10,11 @@ def SERVICES = [
   'cart'           : ['backend', 'yas-cart'],
   'customer'       : ['backend', 'yas-customer'],
   'inventory'      : ['backend', 'yas-inventory'],
-  'location'       : ['backend', 'yas-location'],
   'media'          : ['backend', 'yas-media'],
   'order'          : ['backend', 'yas-order'],
-  'payment'        : ['backend', 'yas-payment'],
   'product'        : ['backend', 'yas-product'],
-  'promotion'      : ['backend', 'yas-promotion'],
-  'rating'         : ['backend', 'yas-rating'],
-  'recommendation' : ['backend', 'yas-recommendation'],
   'search'         : ['backend', 'yas-search'],
   'tax'            : ['backend', 'yas-tax'],
-  'webhook'        : ['backend', 'yas-webhook'],
   'sampledata'     : ['backend', 'yas-sampledata'],
 ]
 
@@ -129,12 +127,13 @@ pipeline {
             def tags = readJSON(text: env._TAGS_JSON)
 
             // Roughly mirror deploy-yas-applications.sh: bff/ui first, then backends.
+            // (payment, payment-paypal, promotion, rating, recommendation, webhook,
+            //  location are intentionally out of scope — see SERVICES comment above.)
             def order = [
               'backoffice-bff', 'storefront-bff', 'backoffice-ui', 'storefront-ui',
-              'customer', 'product', 'media', 'inventory', 'location',
-              'cart', 'order', 'payment',
-              'promotion', 'rating', 'recommendation',
-              'search', 'tax', 'webhook', 'sampledata',
+              'customer', 'product', 'media', 'inventory',
+              'cart', 'order',
+              'search', 'tax', 'sampledata',
             ]
 
             order.each { svc ->
