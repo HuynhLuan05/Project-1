@@ -22,13 +22,13 @@ spec:
     httpPort: 80
   hostname:
     hostname: http://{{ .Values.hostname }}
-    backchannelDynamic: true
-    strict: false
+    backchannelDynamic: false
+    strict: true
   proxy:
     headers: xforwarded
   ingress:
-    enabled: true
-    className: nginx
+    enabled: false
+    className: gce
   unsupported:
     podTemplate:
       spec:

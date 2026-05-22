@@ -280,7 +280,7 @@ spec:
         image: ghcr.io/nashtech-garage/yas-media:latest
         env:
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:postgresql://postgres:5432/media"
+          value: "jdbc:postgresql://postgresql.postgres:5432/media"
         - name: SERVER_SERVLET_CONTEXT_PATH # a hacky way to fix sub path behind nginx
           value: "/media"
         - name: YAS_PUBLICURL
@@ -314,7 +314,7 @@ spec:
         image: ghcr.io/nashtech-garage/yas-product:latest
         env:
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:postgresql://postgres:5432/product"
+          value: "jdbc:postgresql://postgresql.postgres:5432/product"
         - name: SERVER_SERVLET_CONTEXT_PATH
           value: "/product"
         - name: YAS_SERVICES_MEDIA

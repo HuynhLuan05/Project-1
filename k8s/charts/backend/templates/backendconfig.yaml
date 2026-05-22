@@ -1,0 +1,13 @@
+{{- if .Values.gceBackendConfig.enabled }}
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: {{ default (include "backend.fullname" .) .Values.gceBackendConfig.name }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  healthCheck:
+    type: {{ .Values.gceBackendConfig.healthCheck.type }}
+    port: {{ .Values.gceBackendConfig.healthCheck.port }}
+    requestPath: {{ .Values.gceBackendConfig.healthCheck.requestPath }}
+{{- end }}

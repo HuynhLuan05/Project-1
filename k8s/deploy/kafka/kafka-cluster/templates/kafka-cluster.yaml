@@ -4,6 +4,7 @@ metadata:
   name: kafka-cluster
 spec:
   kafka:
+    version: {{ .Values.kafka.version | quote }}
     replicas: {{ .Values.kafka.replicas }}
     listeners:
       - name: plain
