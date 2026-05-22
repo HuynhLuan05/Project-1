@@ -12,9 +12,37 @@ backend:
     - name: media-application
       configMap:
         name: media-application-configmap
+    - name: media-images
+      emptyDir: {}
   extraVolumeMounts:
     - name: media-application
       mountPath: /opt/yas/media
+    - name: media-images
+      mountPath: /images
   extraApplicationConfigPaths:
     - /opt/yas/media/media-application.yaml
+  initContainers:
+    - name: load-sample-images
+      image: alpine/git:2.47.2
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+        - -c
+        - >
+          rm -rf /tmp/yas &&
+          git clone --depth 1 https://github.com/nashtech-garage/yas.git /tmp/yas &&
+          mkdir -p /images &&
+          cp -R /tmp/yas/sampledata/images/* /images/
+      volumeMounts:
+        - name: media-images
+          mountPath: /images
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+      ephemeral-storage: 256Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+      ephemeral-storage: 512Mi
 

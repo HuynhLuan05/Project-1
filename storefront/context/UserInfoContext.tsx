@@ -20,12 +20,21 @@ export function UserInfoProvider({ children }: React.PropsWithChildren) {
   const fetchUserInfo = useCallback(() => {
     getMyProfile()
       .then((res) => {
+        if (!res) {
+          setFirstName('');
+          setLastName('');
+          setEmail('');
+          return;
+        }
         setFirstName(res.firstName);
         setLastName(res.lastName);
         setEmail(res.email);
       })
       .catch((err) => {
         console.log(err);
+        setFirstName('');
+        setLastName('');
+        setEmail('');
       });
   }, []);
 
