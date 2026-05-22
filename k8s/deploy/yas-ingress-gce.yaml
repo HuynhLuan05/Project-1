@@ -1,0 +1,148 @@
+# GCE HTTP(S) load balancer for YAS (namespace yas).
+# Host-based rules — match how the live cluster is configured.
+# Apply: kubectl apply -f k8s/deploy/yas-ingress-gce.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: yas-ingress
+  namespace: yas
+  annotations:
+    kubernetes.io/ingress.class: gce
+    kubernetes.io/ingress.allow-http: "true"
+spec:
+  rules:
+    - host: api.yas.local.com
+      http:
+        paths:
+          - path: /swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: swagger-ui
+                port:
+                  number: 8080
+          - path: /product
+            pathType: Prefix
+            backend:
+              service:
+                name: product
+                port:
+                  number: 80
+          - path: /media
+            pathType: Prefix
+            backend:
+              service:
+                name: media
+                port:
+                  number: 80
+          - path: /customer
+            pathType: Prefix
+            backend:
+              service:
+                name: customer
+                port:
+                  number: 80
+          - path: /cart
+            pathType: Prefix
+            backend:
+              service:
+                name: cart
+                port:
+                  number: 80
+          - path: /rating
+            pathType: Prefix
+            backend:
+              service:
+                name: rating
+                port:
+                  number: 80
+          - path: /order
+            pathType: Prefix
+            backend:
+              service:
+                name: order
+                port:
+                  number: 80
+          - path: /payment
+            pathType: Prefix
+            backend:
+              service:
+                name: payment
+                port:
+                  number: 80
+          - path: /location
+            pathType: Prefix
+            backend:
+              service:
+                name: location
+                port:
+                  number: 80
+          - path: /inventory
+            pathType: Prefix
+            backend:
+              service:
+                name: inventory
+                port:
+                  number: 80
+          - path: /tax
+            pathType: Prefix
+            backend:
+              service:
+                name: tax
+                port:
+                  number: 80
+          - path: /promotion
+            pathType: Prefix
+            backend:
+              service:
+                name: promotion
+                port:
+                  number: 80
+          - path: /search
+            pathType: Prefix
+            backend:
+              service:
+                name: search
+                port:
+                  number: 80
+          - path: /recommendation
+            pathType: Prefix
+            backend:
+              service:
+                name: recommendation
+                port:
+                  number: 80
+          - path: /webhook
+            pathType: Prefix
+            backend:
+              service:
+                name: webhook
+                port:
+                  number: 80
+          - path: /sampledata
+            pathType: Prefix
+            backend:
+              service:
+                name: sampledata
+                port:
+                  number: 80
+    - host: backoffice.yas.local.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backoffice-ui
+                port:
+                  number: 3000
+    - host: storefront.yas.local.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: storefront-ui
+                port:
+                  number: 3000

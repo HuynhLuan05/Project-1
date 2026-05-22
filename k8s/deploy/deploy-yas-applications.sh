@@ -32,7 +32,13 @@ sleep 60
 
 helm upgrade --install swagger-ui ../charts/swagger-ui \
 --namespace yas --create-namespace \
---set ingress.host="api.$DOMAIN"
+--set ingress.host="api.$DOMAIN" \
+--set apiDocsBaseUrl="http://api.$DOMAIN"
+
+kubectl apply -f ./yas-ingress-gce.yaml
+
+# GCE health checks: management port 8090 (see apply-gce-backend-health.sh)
+./apply-gce-backend-health.sh
 
 sleep 20
 

@@ -1,0 +1,189 @@
+Member 3 — Jenkins CD on GKE
+
+ Context
+
+ Project 02 (YAS — Yet Another Shop) requires a CD system for ~19 microservices on Kubernetes. The
+ team's cluster is GKE (project steady-datum-496203-r2, region australia-southeast1, cluster
+ yas-cluster), already populated by Member 1 with namespaces yas / dev / staging and the full app
+ deployed via Helm charts in k8s/charts/. Member 2's CI pushes per-commit images to Docker Hub tagged
+ with the commit SHA (the latest/main tags on ghcr.io/nashtech-garage/yas-<svc> continue to exist).
+
+ Member 3 owns the CD half: Jenkins on the cluster plus two pipelines.
+
+ - Req. 4 — developer_build: parameterized job. Developer picks a branch name per service. For services
+  whose branch ≠ main, the job resolves the branch's HEAD SHA on GitHub and deploys the Docker Hub
+ image tagged with that SHA; all other services keep their default latest image from ghcr.io. After
+ deploy, the build page shows a clickable NodePort URL the developer can hit (with a /etc/hosts entry
+ to a node external IP).
+ - Req. 5 — teardown: helm uninstall every YAS release in the yas namespace.
+ - Auto-trigger: GitHub webhook fires Jenkins on main pushes.
+
+ Decisions confirmed with user:
+ - Jenkins runs on GKE via Helm.
+ - Deploy target namespace = yas (matches teardown wording).
+ - developer_build deploys all ~19 services with mixed tags every run.
+
+ ---
+ Approach
+
+ 1. Jenkins on GKE (Helm)
+
+ Install the official jenkins/jenkins Helm chart into a jenkins namespace. Use the Kubernetes plugin so
+  build agents run as ephemeral pods on the same cluster — that gives us in-cluster kubectl/helm access
+  without shipping a service-account JSON.
+
+ Files to create
+
+ - jenkins/values.yaml — chart values: persistent volume (10–20Gi standard-rwo), LoadBalancer service
+ for the controller UI (GCP ephemeral IP is fine; alternatively NodePort + same hosts file pattern as
+ the apps), preinstalled plugins (kubernetes, workflow-aggregator, git, github, docker-workflow,
+ blueocean, configuration-as-code, job-dsl), JCasC config that seeds the two pipeline jobs, and a pod
+ template with a custom agent image containing kubectl + helm + git + yq.
+ - jenkins/agent.Dockerfile — extends jenkins/inbound-agent and installs kubectl, helm, yq, curl. Push
+ to Docker Hub once as <dockerhub-user>/yas-jenkins-agent:1.
+ - jenkins/rbac.yaml — ServiceAccount jenkins-deployer in the jenkins namespace plus a Role/RoleBinding
+  in the yas namespace granting helm the verbs it needs on deployments, services, pods, configmaps,
+ secrets, replicasets. The Jenkins agent pod template references this SA.
+ - jenkins/install.sh — one-shot install script: helm repo add jenkins https://charts.jenkins.io &&
+ helm upgrade --install jenkins jenkins/jenkins -n jenkins --create-namespace -f jenkins/values.yaml.
+
+ 2. developer_build pipeline
+
+ File: jenkins/jobs/developer_build/Jenkinsfile
+
+ Parameters — one string parameter per service (default = main):
+ SVC_CART, SVC_CUSTOMER, SVC_DELIVERY, SVC_INVENTORY, SVC_LOCATION,
+ SVC_MEDIA, SVC_ORDER, SVC_PAYMENT, SVC_PAYMENT_PAYPAL, SVC_PRODUCT,
+ SVC_PROMOTION, SVC_RATING, SVC_RECOMMENDATION, SVC_SAMPLEDATA,
+ SVC_SEARCH, SVC_TAX, SVC_WEBHOOK, SVC_BACKOFFICE_BFF, SVC_STOREFRONT_BFF
+
+ Service list lives in a single Groovy Map services = ['cart': params.SVC_CART, ...] at the top of the
+ Jenkinsfile so it's the only place to edit when services are added.
+
+ Stages:
+
+ 1. Checkout — clone the team's YAS fork at main (we need k8s/charts/, not the per-branch source).
+ 2. Resolve SHAs — for each service whose param ≠ main, call git ls-remote
+ https://github.com/<team>/yas.git refs/heads/<branch> to get the HEAD SHA. Store as tags[svc] =
+ sha[:7] (or full sha — must match what Member 2's CI uses for the Docker Hub tag). Branch=main →
+ tags[svc] = 'latest'.
+ 3. Deploy — for each service, run:
+ helm upgrade --install <svc> k8s/charts/<svc> \
+   --namespace yas --create-namespace \
+   --set backend.image.repository=<dockerhub-user>/yas-<svc> \
+   --set backend.image.tag=<sha-or-latest> \
+   --wait --timeout 5m
+ 3. When tag is latest, also re-point repository to ghcr.io/nashtech-garage/yas-<svc> so untouched
+ services stay on the canonical ghcr image. (backend.image is the chart's documented override path —
+ confirmed in k8s/charts/cart/values.yaml:1-4.)
+ 4. Resolve access URL — read the NodePort of the storefront service (kubectl -n yas get svc
+ storefront-ui -o jsonpath='{.spec.ports[0].nodePort}') and the cluster's external node IP (kubectl get
+  nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}'). For an
+ Ingress-based setup the URL is http://<team-domain>:<nodeport>/; the developer adds <node-ip>
+ <team-domain> to /etc/hosts.
+ 5. Publish URL — use the description-setter plugin or currentBuild.description = "<a
+ href='http://...'>Open YAS</a>" to render a clickable link on the build page (technique from the
+ Jenkins forum link in the PDF).
+
+ Post-build: archive the resolved tags map as a small JSON artifact so the developer can see exactly
+ which SHA each service got.
+
+ 3. teardown pipeline
+
+ File: jenkins/jobs/teardown/Jenkinsfile
+
+ Single stage: helm list -n yas -q | xargs -r -n1 helm uninstall -n yas. Optionally kubectl -n yas
+ delete pvc --all if guarded by a CLEAN_PVC boolean parameter (default false — protects Postgres/Kafka
+ volumes).
+
+ 4. GitHub webhook (auto-trigger on main)
+
+ - In Jenkins, install/enable the GitHub plugin and add properties { pipelineTriggers([githubPush()]) }
+  to the developer_build Jenkinsfile so a push to main runs it with defaults (all services = main → all
+  latest). This is effectively the "main change ⇒ redeploy dev" leg of Req. 6 unless Member 4's ArgoCD
+ already covers it; coordinate so we don't double-deploy.
+ - Webhook URL: http://<jenkins-lb>/github-webhook/. Add it on the GitHub repo settings under Webhooks
+ → application/json, secret stored as a Jenkins credential.
+
+ 5. JCasC seeding (so the jobs exist on first boot)
+
+ In jenkins/values.yaml under controller.JCasC.configScripts, define a jobs block that creates both
+ pipeline jobs as pipelineScript jobs pointing at the Jenkinsfile paths in the repo (Pipeline script
+ from SCM). That way teardown of the Jenkins pod doesn't lose the job definitions.
+
+ ---
+ Critical files
+
+ ┌──────────────────────────────────────────┬───────────────────────────────────────────────────────┐
+ │                   Path                   │                        Purpose                        │
+ ├──────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+ │ jenkins/values.yaml                      │ Helm values for Jenkins (plugins, persistence, JCasC, │
+ │                                          │  pod template)                                        │
+ ├──────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+ │ jenkins/agent.Dockerfile                 │ Custom agent image with kubectl + helm                │
+ ├──────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+ │ jenkins/rbac.yaml                        │ ServiceAccount + Role/RoleBinding in yas namespace    │
+ ├──────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+ │ jenkins/install.sh                       │ One-shot installer                                    │
+ ├──────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+ │ jenkins/jobs/developer_build/Jenkinsfile │ Req. 4 pipeline                                       │
+ ├──────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+ │ jenkins/jobs/teardown/Jenkinsfile        │ Req. 5 pipeline                                       │
+ ├──────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+ │ jenkins/README.md                        │ Setup steps, screenshots, /etc/hosts instructions     │
+ └──────────────────────────────────────────┴───────────────────────────────────────────────────────┘
+
+ Reused (do not modify):
+ - k8s/charts/<svc>/values.yaml — already exposes backend.image.repository and backend.image.tag
+ overrides; the pipeline uses --set rather than editing files.
+ - k8s/deploy/deploy-yas-applications.sh — useful reference for the Helm command structure but not
+ invoked by Jenkins.
+
+ ---
+ Open coordination items
+
+ - Confirm Member 2's image naming before coding the pipeline. Need <dockerhub-user> and exact pattern
+ (likely <user>/yas-<svc>) and whether the tag is the full SHA or 7-char short SHA — the pipeline --set
+  must match exactly.
+ - NodePort exposure — Member 1 has already added NodePort services per recent commits. Confirm which
+ service (storefront-ui? ingress-nginx?) is the developer-facing one and reuse its name in the
+ pipeline.
+ - ArgoCD overlap — Member 4's yas-dev ArgoCD app auto-syncs the dev namespace from main. The Jenkins
+ main webhook should deploy into yas, not dev, to avoid fighting ArgoCD.
+
+ ---
+ Verification
+
+ 1. Jenkins reachable — kubectl -n jenkins get svc jenkins → open the LB IP, log in, confirm both jobs
+ were created by JCasC.
+ 2. Cluster auth from agent — run an ad-hoc "Hello" pipeline that does kubectl get ns and helm list -A;
+  both must succeed using the in-cluster SA.
+ 3. Happy path developer_build — push a trivial change to a branch dev_tax_service on the team fork;
+ wait for Member 2's GHA to push <user>/yas-tax:<sha>; trigger developer_build with
+ SVC_TAX=dev_tax_service and everything else default; verify:
+   - helm list -n yas shows 19 releases.
+ pipeline.
+ - ArgoCD overlap — Member 4's yas-dev ArgoCD app auto-syncs the dev namespace from main. The Jenkins
+ main webhook should deploy into yas, not dev, to avoid fighting ArgoCD.
+
+ ---
+ Verification
+
+ 1. Jenkins reachable — kubectl -n jenkins get svc jenkins → open the LB IP, log in, confirm both jobs
+ were created by JCasC.
+ 2. Cluster auth from agent — run an ad-hoc "Hello" pipeline that does kubectl get ns and helm list -A;
+  both must succeed using the in-cluster SA.
+ 3. Happy path developer_build — push a trivial change to a branch dev_tax_service on the team fork;
+ wait for Member 2's GHA to push <user>/yas-tax:<sha>; trigger developer_build with
+ SVC_TAX=dev_tax_service and everything else default; verify:
+   - helm list -n yas shows 19 releases.
+   - kubectl -n yas get deploy tax -o jsonpath='{.spec.template.spec.containers[0].image}' ends with
+ <sha>.
+   - Other deployments still point at ghcr.io/.../yas-<svc>:latest.
+   - Build page shows a clickable URL; after /etc/hosts edit, browser hits storefront.
+ 4. Teardown — run teardown job; helm list -n yas returns empty; kubectl -n yas get pods eventually
+ empties.
+ 5. Webhook — push a commit to main on the fork; confirm Jenkins logs show Started by GitHub push on
+ developer_build and the redeploy succeeds.
+ 6. Re-run developer_build after teardown — proves the "deploy all 19" choice protects against an
+ emptied namespace.

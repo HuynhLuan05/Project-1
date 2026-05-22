@@ -70,6 +70,9 @@ applicationConfig:
         bootstrap-servers: kafka-cluster-kafka-brokers.kafka:9092
 
   springdoc:
+    api-docs:
+      # Swagger UI v4 (and some cached v5 bundles) only render openapi 3.0.x, not 3.1.0.
+      version: openapi_3_0
     oauthflow:
       authorization-url: http://identity/auth/realms/Yas/protocol/openid-connect/auth
       token-url: http://identity/auth/realms/Yas/protocol/openid-connect/token

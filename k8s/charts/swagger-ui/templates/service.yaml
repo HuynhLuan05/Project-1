@@ -4,6 +4,10 @@ metadata:
   name: {{ include "swagger-ui.fullname" . }}
   labels:
     {{- include "swagger-ui.labels" . | nindent 4 }}
+  {{- if .Values.backendConfig.enabled }}
+  annotations:
+    cloud.google.com/backend-config: '{"default": "{{ include "swagger-ui.fullname" . }}"}'
+  {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:

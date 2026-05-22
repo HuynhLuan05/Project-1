@@ -38,6 +38,8 @@ securityContext: {}
 logbackXmlPath: /opt/yas/config/logback.xml
 httpPort: 80
 metricPort: 8090
+# Emit OpenAPI 3.0.x so standalone Swagger UI (and cached v4 bundles) can render specs.
+springdocApiDocsVersion: openapi_3_0
 databaseConnectionUrl: jdbc:postgresql://postgres:5432
 databaseName: postgres
 
@@ -119,6 +121,13 @@ serviceMonitor:
 service:
   type: ClusterIP
   port: 80
+
+# GCE Ingress (yas-ingress) health checks default to GET / on the Service port (80).
+# Spring serves HTTP on 80 with a servlet context-path; probes use management port 8090.
+backendConfig:
+  enabled: true
+  healthCheckPort: 8090
+  healthCheckPath: /actuator/health/liveness
 
 ingress:
   enabled: false

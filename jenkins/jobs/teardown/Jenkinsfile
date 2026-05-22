@@ -1,0 +1,89 @@
+// Project 02 — Req. 5
+// Teardown pipeline: helm uninstall every release in the `yas` namespace.
+// Optionally also delete PVCs (Postgres/Kafka/Elasticsearch data) — off by default
+// to avoid wiping shared state the rest of the team depends on.
+
+properties([
+  parameters([
+    booleanParam(
+      name: 'CLEAN_PVC',
+      defaultValue: false,
+      description: 'Also delete all PersistentVolumeClaims in the yas namespace (DESTROYS Postgres/Kafka data).'
+    )
+  ]),
+  buildDiscarder(logRotator(numToKeepStr: '20'))
+])
+
+pipeline {
+  agent { label 'yas-deployer' }
+
+  options {
+    timeout(time: 20, unit: 'MINUTES')
+    disableConcurrentBuilds()
+  }
+
+  environment {
+    NAMESPACE = 'yas'
+  }
+
+  stages {
+    stage('List existing releases') {
+      steps {
+        sh "helm list -a -n ${NAMESPACE}"
+      }
+    }
+
+    stage('helm uninstall all') {
+      steps {
+        sh '''
+          set -euo pipefail
+          releases=$(helm list -a -n "$NAMESPACE" -q || true)
+          if [ -z "$releases" ]; then
+            echo "No releases in namespace $NAMESPACE — nothing to do."
+            exit 0
+          fi
+          echo "Uninstalling: $releases"
+          failed=""
+          for r in $releases; do
+            if ! helm uninstall "$r" -n "$NAMESPACE"; then
+              echo ">>> retry $r with --no-hooks"
+              if ! helm uninstall "$r" -n "$NAMESPACE" --no-hooks --ignore-not-found; then
+                failed="$failed $r"
+              fi
+            fi
+          done
+          if [ -n "$failed" ]; then
+            echo "WARNING: these releases could not be fully uninstalled:$failed"
+          fi
+        '''
+      }
+    }
+
+    stage('Optional: delete PVCs') {
+      when { expression { return params.CLEAN_PVC } }
+      steps {
+        sh '''
+          echo "CLEAN_PVC=true — deleting all PVCs in $NAMESPACE"
+          kubectl -n "$NAMESPACE" delete pvc --all --wait=true || true
+        '''
+      }
+    }
+
+  }
+
+  post {
+    always {
+      sh '''
+        echo "Remaining releases:"
+        helm list -a -n "$NAMESPACE" || true
+        echo
+        echo "Remaining pods (should drain shortly):"
+        kubectl -n "$NAMESPACE" get pods || true
+      '''
+    }
+    success { echo "Teardown complete in namespace ${env.NAMESPACE}." }
+    failure { echo "Teardown failed — check logs." }
+  }
+}
+
+

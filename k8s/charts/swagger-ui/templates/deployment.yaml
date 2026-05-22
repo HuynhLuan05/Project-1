@@ -37,7 +37,10 @@ spec:
             - name: BASE_URL
               value: {{ .Values.baseUrl }}
             - name: URLS
-              value: {{ .Values.urls | quote }}
+              value: {{ include "swagger-ui.urls" . | quote }}
+            # Avoid stale Swagger UI v4 assets cached by the browser (Cache-Control: max-age=86400).
+            - name: SWAGGER_UI_DISABLE_SWAGGER_DEFAULT_URL
+              value: "true"
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
