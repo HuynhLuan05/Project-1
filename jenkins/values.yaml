@@ -58,7 +58,7 @@ controller:
                     scm {
                       git {
                         remote { url('https://github.com/HuynhLuan05/YAS.git') }
-                        branch('*/feat/i-cd')
+                        branch('*/main')
                       }
                     }
                     scriptPath('jenkins/jobs/developer_build/Jenkinsfile')
@@ -74,7 +74,7 @@ controller:
                     scm {
                       git {
                         remote { url('https://github.com/HuynhLuan05/YAS.git') }
-                        branch('*/feat/i-cd')
+                        branch('*/main')
                       }
                     }
                     scriptPath('jenkins/jobs/teardown/Jenkinsfile')
