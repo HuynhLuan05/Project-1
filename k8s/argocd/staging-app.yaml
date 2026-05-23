@@ -4,7 +4,7 @@ metadata:
   name: yas-staging
   namespace: argocd
   annotations:
-    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/write-back-method: argocd
     argocd-image-updater.argoproj.io/image-list: |
       storefrontbff=ntanh23/yas-storefront-bff,
       backofficebff=ntanh23/yas-backoffice-bff,
@@ -66,7 +66,7 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/HuynhLuan05/YAS.git'
-    targetRevision: 'v1.0.0'
+    targetRevision: main
     path: k8s/charts/yas-dev
     helm:
       valueFiles:
