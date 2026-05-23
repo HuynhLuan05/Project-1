@@ -4,7 +4,7 @@ metadata:
   name: yas-dev
   namespace: argocd
   annotations:
-    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/write-back-method: argocd
     argocd-image-updater.argoproj.io/image-list: |
       storefrontbff=ntanh23/yas-storefront-bff,
       backofficebff=ntanh23/yas-backoffice-bff,
