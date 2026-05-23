@@ -29,3 +29,5 @@ helm upgrade --install keycloak ./keycloak/keycloak \
 
 kubectl apply -f ./keycloak-service-gce.yaml
 kubectl apply -f ./keycloak-ingress.yaml
+
+./configure-keycloak-master-http.sh

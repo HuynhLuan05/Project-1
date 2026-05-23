@@ -6,6 +6,7 @@ backend:
   nameOverride: recommendation
   fullnameOverride: recommendation
   databaseName: recommendation
+  databaseSslMode: require
   ingress:
     enabled: false
   extraEnvFroms:

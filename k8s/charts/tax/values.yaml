@@ -6,5 +6,6 @@ backend:
   nameOverride: tax
   fullnameOverride: tax
   databaseName: tax
+  databaseSslMode: require
   ingress:
     enabled: false

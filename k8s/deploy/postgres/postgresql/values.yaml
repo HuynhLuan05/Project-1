@@ -3,11 +3,11 @@ password: admin
 replicas: 1
 postgresqlVersion: "15"
 volumeSize: "10Gi"
-maxConnections: "500"
+maxConnections: "200"
 resources:
   requests:
-    cpu: 100m
-    memory: 100Mi
+    cpu: 250m
+    memory: 512Mi
   limits:
-    cpu: 500m
-    memory: 500Mi
+    cpu: "1"
+    memory: 2Gi
