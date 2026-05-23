@@ -3,6 +3,65 @@ kind: Application
 metadata:
   name: yas-dev
   namespace: argocd
+  annotations:
+    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/image-list: |
+      storefrontbff=ntanh23/yas-storefront-bff,
+      backofficebff=ntanh23/yas-backoffice-bff,
+      storefrontui=ntanh23/yas-storefront,
+      backofficeui=ntanh23/yas-backoffice,
+      cart=ntanh23/yas-cart,
+      customer=ntanh23/yas-customer,
+      inventory=ntanh23/yas-inventory,
+      location=ntanh23/yas-location,
+      media=ntanh23/yas-media,
+      order=ntanh23/yas-order,
+      product=ntanh23/yas-product,
+      search=ntanh23/yas-search,
+      tax=ntanh23/yas-tax,
+      sampledata=ntanh23/yas-sampledata
+    argocd-image-updater.argoproj.io/storefrontbff.helm-image-name: storefront-bff.backend.image.repository
+    argocd-image-updater.argoproj.io/storefrontbff.helm-image-tag: storefront-bff.backend.image.tag
+    argocd-image-updater.argoproj.io/storefrontbff.update-strategy: latest
+    argocd-image-updater.argoproj.io/backofficebff.helm-image-name: backoffice-bff.backend.image.repository
+    argocd-image-updater.argoproj.io/backofficebff.helm-image-tag: backoffice-bff.backend.image.tag
+    argocd-image-updater.argoproj.io/backofficebff.update-strategy: latest
+    argocd-image-updater.argoproj.io/storefrontui.helm-image-name: storefront-ui.ui.image.repository
+    argocd-image-updater.argoproj.io/storefrontui.helm-image-tag: storefront-ui.ui.image.tag
+    argocd-image-updater.argoproj.io/storefrontui.update-strategy: latest
+    argocd-image-updater.argoproj.io/backofficeui.helm-image-name: backoffice-ui.ui.image.repository
+    argocd-image-updater.argoproj.io/backofficeui.helm-image-tag: backoffice-ui.ui.image.tag
+    argocd-image-updater.argoproj.io/backofficeui.update-strategy: latest
+    argocd-image-updater.argoproj.io/cart.helm-image-name: cart.backend.image.repository
+    argocd-image-updater.argoproj.io/cart.helm-image-tag: cart.backend.image.tag
+    argocd-image-updater.argoproj.io/cart.update-strategy: latest
+    argocd-image-updater.argoproj.io/customer.helm-image-name: customer.backend.image.repository
+    argocd-image-updater.argoproj.io/customer.helm-image-tag: customer.backend.image.tag
+    argocd-image-updater.argoproj.io/customer.update-strategy: latest
+    argocd-image-updater.argoproj.io/inventory.helm-image-name: inventory.backend.image.repository
+    argocd-image-updater.argoproj.io/inventory.helm-image-tag: inventory.backend.image.tag
+    argocd-image-updater.argoproj.io/inventory.update-strategy: latest
+    argocd-image-updater.argoproj.io/location.helm-image-name: location.backend.image.repository
+    argocd-image-updater.argoproj.io/location.helm-image-tag: location.backend.image.tag
+    argocd-image-updater.argoproj.io/location.update-strategy: latest
+    argocd-image-updater.argoproj.io/media.helm-image-name: media.backend.image.repository
+    argocd-image-updater.argoproj.io/media.helm-image-tag: media.backend.image.tag
+    argocd-image-updater.argoproj.io/media.update-strategy: latest
+    argocd-image-updater.argoproj.io/order.helm-image-name: order.backend.image.repository
+    argocd-image-updater.argoproj.io/order.helm-image-tag: order.backend.image.tag
+    argocd-image-updater.argoproj.io/order.update-strategy: latest
+    argocd-image-updater.argoproj.io/product.helm-image-name: product.backend.image.repository
+    argocd-image-updater.argoproj.io/product.helm-image-tag: product.backend.image.tag
+    argocd-image-updater.argoproj.io/product.update-strategy: latest
+    argocd-image-updater.argoproj.io/search.helm-image-name: search.backend.image.repository
+    argocd-image-updater.argoproj.io/search.helm-image-tag: search.backend.image.tag
+    argocd-image-updater.argoproj.io/search.update-strategy: latest
+    argocd-image-updater.argoproj.io/tax.helm-image-name: tax.backend.image.repository
+    argocd-image-updater.argoproj.io/tax.helm-image-tag: tax.backend.image.tag
+    argocd-image-updater.argoproj.io/tax.update-strategy: latest
+    argocd-image-updater.argoproj.io/sampledata.helm-image-name: sampledata.backend.image.repository
+    argocd-image-updater.argoproj.io/sampledata.helm-image-tag: sampledata.backend.image.tag
+    argocd-image-updater.argoproj.io/sampledata.update-strategy: latest
 spec:
   project: default
   source:
