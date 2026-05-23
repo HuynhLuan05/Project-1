@@ -3,7 +3,8 @@ name: product service ci
 on:
     # Trigger the workflow on push or pull request events to the main branch, but only for changes in the product directory, workflow files, or pom.xml
     push:
-        branches: [ "main" ]
+        branches:
+      - "**"
         tags:
           - "v*.*.*"
         paths:
@@ -24,7 +25,7 @@ jobs:
     Build:
         runs-on: ubuntu-latest
         env:
-            FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
+            FROM_ORIGINAL_REPOSITORY: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         steps:
             - uses: actions/checkout@v4
