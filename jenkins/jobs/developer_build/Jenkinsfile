@@ -1,5 +1,5 @@
 // Removed from scope (not deployed by this pipeline):
-//   payment, payment-paypal, promotion, rating, recommendation, webhook, location
+//   payment, payment-paypal, promotion, rating, recommendation, webhook
 // Reason: out of scope for current sprint. If they need to come back, add them
 // here AND in the deploy `order` list below.
 def SERVICES = [
@@ -10,6 +10,7 @@ def SERVICES = [
   'cart'           : ['backend', 'yas-cart'],
   'customer'       : ['backend', 'yas-customer'],
   'inventory'      : ['backend', 'yas-inventory'],
+  'location'       : ['backend', 'yas-location'],
   'media'          : ['backend', 'yas-media'],
   'order'          : ['backend', 'yas-order'],
   'product'        : ['backend', 'yas-product'],
@@ -158,11 +159,11 @@ pipeline {
             def tags = readJSON(text: env._TAGS_JSON)
 
             // Roughly mirror deploy-yas-applications.sh: bff/ui first, then backends.
-            // (payment, payment-paypal, promotion, rating, recommendation, webhook,
-            //  location are intentionally out of scope — see SERVICES comment above.)
+            // (payment, payment-paypal, promotion, rating, recommendation, webhook
+            //  are intentionally out of scope — see SERVICES comment above.)
             def order = [
               'backoffice-bff', 'storefront-bff', 'backoffice-ui', 'storefront-ui',
-              'customer', 'product', 'media', 'inventory',
+              'customer', 'product', 'media', 'inventory', 'location',
               'cart', 'order',
               'search', 'tax', 'sampledata',
             ]
