@@ -211,6 +211,21 @@ pipeline {
       }
     }
 
+    stage('Deploy swagger-ui') {
+      // swagger-ui chart pulls a public image (swaggerapi/swagger-ui:v5.x) and
+      // does not use the backend/ui subchart pattern — it has its own image
+      // config and no per-team SHA. Install with chart defaults plus the
+      // expected ingress host so /swagger-ui/ resolves via yas-ingress.
+      steps {
+        sh """
+          helm upgrade --install swagger-ui ${CHARTS_DIR}/swagger-ui \\
+            --namespace ${NAMESPACE} \\
+            --set ingress.host=api.yas.local.com \\
+            --wait --timeout 5m
+        """
+      }
+    }
+
     stage('Publish access URL') {
       steps {
         script {
