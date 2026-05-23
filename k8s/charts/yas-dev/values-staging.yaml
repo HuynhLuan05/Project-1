@@ -3,6 +3,8 @@
 # ── BFF Services ──
 storefront-bff:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     fullnameOverride: storefront-bff-staging
     serviceAccount:
       create: true
@@ -10,6 +12,8 @@ storefront-bff:
       tag: "v1.0.0"        
 backoffice-bff:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     fullnameOverride: backoffice-bff-staging
     serviceAccount:
       create: true
@@ -35,66 +39,92 @@ swagger-ui:
 # ── Backend Services ──
 product:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"        
 
 media:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"
 
 cart:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"
 
 order:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"
 
 customer:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"
 
 inventory:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"
 
 location:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"
 
 payment:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"
 
 promotion:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"
 
 rating:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"
 
 search:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"
 
 tax:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"
 
 webhook:
   backend:
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "yas-java"
     image:
       tag: "v1.0.0"
 
