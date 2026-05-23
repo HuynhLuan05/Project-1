@@ -10,6 +10,17 @@ data:
       server_name _;
       resolver 34.118.224.10 valid=30s ipv6=off;
 
+      set $swagger_ui_upstream http://swagger-ui.yas.svc.cluster.local:8080;
+      set $product_upstream http://product.yas.svc.cluster.local:80;
+      set $media_upstream http://media.yas.svc.cluster.local:80;
+      set $customer_upstream http://customer.yas.svc.cluster.local:80;
+      set $cart_upstream http://cart.yas.svc.cluster.local:80;
+      set $location_upstream http://location.yas.svc.cluster.local:80;
+      set $inventory_upstream http://inventory.yas.svc.cluster.local:80;
+      set $order_upstream http://order.yas.svc.cluster.local:80;
+      set $payment_upstream http://payment.yas.svc.cluster.local:80;
+      set $search_upstream http://search.yas.svc.cluster.local:80;
+      set $tax_upstream http://tax.yas.svc.cluster.local:80;
       set $rating_upstream http://rating.yas.svc.cluster.local:80;
       set $promotion_upstream http://promotion.yas.svc.cluster.local:80;
       set $webhook_upstream http://webhook.yas.svc.cluster.local:80;
@@ -31,7 +42,7 @@ data:
       }
 
       location /swagger-ui/ {
-        proxy_pass http://swagger-ui.yas.svc.cluster.local:8080/swagger-ui/;
+        proxy_pass $swagger_ui_upstream;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -40,19 +51,19 @@ data:
       }
 
       location /product/ {
-        proxy_pass http://product.yas.svc.cluster.local:80;
+        proxy_pass $product_upstream;
       }
 
       location /media/ {
-        proxy_pass http://media.yas.svc.cluster.local:80;
+        proxy_pass $media_upstream;
       }
 
       location /customer/ {
-        proxy_pass http://customer.yas.svc.cluster.local:80;
+        proxy_pass $customer_upstream;
       }
 
       location /cart/ {
-        proxy_pass http://cart.yas.svc.cluster.local:80;
+        proxy_pass $cart_upstream;
       }
 
       location ~ ^/rating/storefront/ratings/product/[0-9]+/average-star$ {
@@ -72,19 +83,19 @@ data:
       }
 
       location /location/ {
-        proxy_pass http://location.yas.svc.cluster.local:80;
+        proxy_pass $location_upstream;
       }
 
       location /inventory/ {
-        proxy_pass http://inventory.yas.svc.cluster.local:80;
+        proxy_pass $inventory_upstream;
       }
 
       location /order/ {
-        proxy_pass http://order.yas.svc.cluster.local:80;
+        proxy_pass $order_upstream;
       }
 
       location /payment/ {
-        proxy_pass http://payment.yas.svc.cluster.local:80;
+        proxy_pass $payment_upstream;
       }
 
       location /promotion/ {
@@ -92,7 +103,7 @@ data:
       }
 
       location /search/ {
-        proxy_pass http://search.yas.svc.cluster.local:80;
+        proxy_pass $search_upstream;
       }
 
       location /webhook/ {
@@ -114,7 +125,7 @@ data:
       }
 
       location /tax/ {
-        proxy_pass http://tax.yas.svc.cluster.local:80;
+        proxy_pass $tax_upstream;
       }
 
       location @rating_average_fallback {

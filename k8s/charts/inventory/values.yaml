@@ -6,5 +6,6 @@ backend:
   nameOverride: inventory
   fullnameOverride: inventory
   databaseName: inventory
+  databaseSslMode: require
   ingress:
     enabled: false

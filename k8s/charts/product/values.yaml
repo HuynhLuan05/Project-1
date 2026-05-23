@@ -6,6 +6,7 @@ backend:
   nameOverride: product
   fullnameOverride: product
   databaseName: product
+  databaseSslMode: require
   hostAliases:
     - ip: 34.118.226.89
       hostnames:
