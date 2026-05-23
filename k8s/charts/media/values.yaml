@@ -6,6 +6,7 @@ backend:
   nameOverride: media
   fullnameOverride: media
   databaseName: media
+  databaseSslMode: require
   ingress:
     enabled: false
   extraVolumes:

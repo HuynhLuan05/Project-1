@@ -6,6 +6,7 @@ backend:
   nameOverride: cart
   fullnameOverride: cart
   databaseName: cart
+  databaseSslMode: require
   hostAliases:
     - ip: 34.118.226.89
       hostnames:
