@@ -4,4 +4,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class DeliveryService {
+
+    public String getStatus() {
+        return "DELIVERY_SERVICE_READY";
+    }
 }
