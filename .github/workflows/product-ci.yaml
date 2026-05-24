@@ -2,24 +2,24 @@ name: product service ci
 
 on:
     # Trigger the workflow on push or pull request events to the main branch, but only for changes in the product directory, workflow files, or pom.xml
-    push:
-        branches:
+  push:
+    branches:
       - "**"
-        tags:
-          - "v*.*.*"
-        paths:
-            - "product/**"
-            - ".github/workflows/actions/action.yaml"
-            - ".github/workflows/product-ci.yaml"
-            - "pom.xml"
-    pull_request:
-        branches: ["main"]
-        paths:
-            - "product/**"
-            - ".github/workflows/actions/action.yaml"
-            - ".github/workflows/product-ci.yaml"
-            - "pom.xml"
-    workflow_dispatch:
+    tags:
+      - "v*.*.*"
+    paths:
+      - "product/**"
+      - ".github/workflows/actions/action.yaml"
+      - ".github/workflows/product-ci.yaml"
+      - "pom.xml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "product/**"
+      - ".github/workflows/actions/action.yaml"
+      - ".github/workflows/product-ci.yaml"
+      - "pom.xml"
+  workflow_dispatch:
 
 jobs:
     Build:
@@ -53,7 +53,7 @@ jobs:
               if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && env.SONAR_TOKEN != '' }}
               env:
                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-              run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -f product
+              run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -pl product -am
             - name: OWASP Dependency Check
               if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
               continue-on-error: true

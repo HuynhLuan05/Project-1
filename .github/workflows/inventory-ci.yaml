@@ -68,7 +68,7 @@ jobs:
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && env.SONAR_TOKEN != '' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -f inventory
+        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -pl inventory -am
       - name: Add coverage report to PR
         uses: madrapps/jacoco-report@v1.6.1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}

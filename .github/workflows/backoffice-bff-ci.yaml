@@ -33,19 +33,19 @@ jobs:
       - uses: ./.github/workflows/actions
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        run: mvn checkstyle:checkstyle -f backoffice-bff -Dcheckstyle.output.file=backoffice-bff-checkstyle-result.xml
+        run: mvn checkstyle:checkstyle -pl backoffice-bff -am -Dcheckstyle.output.file=backoffice-bff-checkstyle-result.xml
       - name: Upload Checkstyle Result
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: jwgmeligmeyling/checkstyle-github-action@master
         with:
           path: '**/backoffice-bff-checkstyle-result.xml'
       - name: Run Maven Verify
-        run: mvn clean verify -f backoffice-bff
+        run: mvn clean verify -pl backoffice-bff -am
       - name: Analyze with sonar cloud
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && env.SONAR_TOKEN != '' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -f backoffice-bff
+        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -pl backoffice-bff -am
       - name: OWASP Dependency Check
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         continue-on-error: true
