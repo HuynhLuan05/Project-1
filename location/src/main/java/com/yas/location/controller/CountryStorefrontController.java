@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CountryStorefrontController {
     private final CountryService countryService;
+    private static final String TAG = "CountryStorefrontController";
 
     @GetMapping
     public ResponseEntity<List<CountryVm>> listCountries() {
