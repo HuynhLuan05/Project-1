@@ -6,6 +6,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
+/**
+ * Entry point for the Customer service.
+ */
 @SpringBootApplication(scanBasePackages = {"com.yas.customer", "com.yas.commonlibrary"})
 @EnableConfigurationProperties({ServiceUrlConfig.class, CorsConfig.class})
 public class CustomerApplication {
