@@ -1,13 +1,11 @@
 package com.yas.customer.model;
 
+import com.yas.commonlibrary.model.AbstractAuditEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
-import com.yas.commonlibrary.model.AbstractAuditEntity;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
